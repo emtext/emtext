@@ -33,6 +33,10 @@ class Parser(object):
                 tree.remove(each)
             else:
                 self._clear_ignore(each)
+        # 去除空的p及div
+        for each in tree.getiterator():
+            if each.tag.lower() in ['p', 'div'] and len(each) == 0 and len((each.text if each.text else '').lstrip()) == 0:
+                each.getparent().remove(each)
 
     def _checkUnicode(self, html):
         """
@@ -65,7 +69,7 @@ class Parser(object):
                     text = ''
                     for t in each.itertext():
                         text += t
-                text = text.lstrip('\n')
+                text = text.lstrip()
                 if text and htmllen:
                     self.result.append([text, float(len(text)) / htmllen, len(text), htmllen, each.tag, '', -1])
 

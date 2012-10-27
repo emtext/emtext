@@ -11,62 +11,70 @@ import re
 import urllib2
 import chardet
 import feedparser
-from ann import train
+from ann import train, check
 from html2text import html2text
 from parse import Parser
 
-if __name__ == '__main__':
-    feed_list = (
-#        'http://www.ifanr.com/feed',
-#        'http://rss.mydrivers.com/rss.aspx?Tid=1',
-        'http://www.ruanyifeng.com/blog/atom.xml',
-        )
+def train_from_rss(feeds):
     p = Parser()
-    for feed_url in feed_list:
+    allLines = []
+    for link, content in feeds:
+        text_clean = re.sub('<[^<]+?>', '', content)
+        print text_clean
+        raw = urllib2.urlopen(link).read()
+        encoding = chardet.detect(raw)['encoding']
+        raw_uni = raw.decode(encoding)
+        # ToDo: 把 raw_uni 丢给密度计算器，算出每行文本的密度等属性。
+        list = p.parser(raw_uni)
+        # ToDo: 看每行文本是否出现在 text_clean 中，如果出现在里面，那么标记为 1 （也即：认为是正文）。
+        for each in list:
+#            each[5] = int(each[0] in text_clean)
+            each[5] = int(each[0] in text_clean)
 
-        feed = feedparser.parse(open('atom.xml').read())
-        allLines = []
-        for item in feed['entries'][:5]:
-            url = item['link']
-            print url
-            text_clean = re.sub('<[^<]+?>', '', item['content'][0]['value'])
-#            text_clean = html2text(item['content'][0]['value'])
-            print text_clean
-            raw = urllib2.urlopen(item['link']).read()
-            encoding = chardet.detect(raw)['encoding']
-            raw_uni = raw.decode(encoding)
-            print raw_uni
-            # ToDo: 把 raw_uni 丢给密度计算器，算出每行文本的密度等属性。
-            list = p.parser(raw_uni)
-            # ToDo: 看每行文本是否出现在 text_clean 中，如果出现在里面，那么标记为 1 （也即：认为是正文）。
-            for each in list:
-                each[5] = int(each[0] in text_clean)
-            # 检查被过滤掉的内容
-            for t in [each[0] for each in list if each[5]==0]:
-                print t
-            # ToDo: 把训练集丢给 ann.py 里的 train 函数。
-            # 保证所有的都是0或1
-            [each.__setitem__(5, 0) for each in list if each[5]<0]
-            first = True
-            lines = []
-            # 大于2行才有意义
-            if len(list) > 2:
-                for index in range(len(list)):
-                    if index == 0:
-                        lines.append(
-                            [list[index][1], list[index][2], list[index][3], 0, 0, 0,
-                             list[index + 1][1], list[index + 1][2], list[index + 1][3], list[index][5]])
-                    if index == len(list) - 1:
-                        lines.append(
-                            [list[index][1], list[index][2], list[index][3], list[index - 1][1], list[index - 1][2], list[index - 1][3],
-                             0, 0, 0, list[index][5]])
-                    else:
-                        lines.append(
-                            [list[index][1], list[index][2], list[index][3], list[index - 1][1], list[index - 1][2], list[index - 1][3],
-                             list[index + 1][1], list[index + 1][2], list[index + 1][3], list[index][5]])
+        # ToDo: 把训练集丢给 ann.py 里的 train 函数。
+        # 保证所有的都是0或1
+        [each.__setitem__(5, 0) for each in list if each[5]<0]
+        first = True
+        lines = []
+        # 大于2行才有意义
+        # 获取最后一个是1的,这样所有判断的才是确定是正确的。
+        last = 0
+        for index, val in enumerate(list):
+            if val[5]:
+                last = index
+        for index in range(last):
+            print str(list[index][5]) + str(list[index][1])[:4] + list[index][0]
 
-        allLines += lines
-        for each in allLines:
-            print ','.join([str(e) for e in each])
-        train(lines)
+        if len(list) > 2:
+            for index in range(len(list)):
+                if index > last:
+                    break
+                if index == 0:
+                    lines.append(
+                        [list[index][1], list[index][2], list[index][3], 0, 0, 0,
+                         list[index + 1][1], list[index + 1][2], list[index + 1][3], list[index][5]])
+                if index == len(list) - 1:
+                    lines.append(
+                        [list[index][1], list[index][2], list[index][3], list[index - 1][1], list[index - 1][2], list[index - 1][3],
+                         0, 0, 0, list[index][5]])
+                else:
+                    lines.append(
+                        [list[index][1], list[index][2], list[index][3], list[index - 1][1], list[index - 1][2], list[index - 1][3],
+                         list[index + 1][1], list[index + 1][2], list[index + 1][3], list[index][5]])
+
+    allLines += lines
+    train(lines)
+
+if __name__ == '__main__':
+    feed_url = 'http://www.ruanyifeng.com/blog/atom.xml'
+    feed = feedparser.parse(feed_url)
+    feeds = []
+    for item in feed['entries'][:5]:
+        feeds.append((item['link'], item['content'][0]['value']))
+    train_from_rss(feeds)
+
+#        for each in allLines:
+#            if check(each[:9]):
+#                print each[9]
+
 

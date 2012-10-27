@@ -1,0 +1,3947 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>阮一峰的网络日志</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/" />
+    <link rel="self" type="application/atom+xml" href="http://www.ruanyifeng.com/blog/atom.xml" />
+    <id>tag:www.ruanyifeng.com,2010-04-11:/blog//1</id>
+    <updated>2012-10-27T05:31:01Z</updated>
+    <subtitle>Ruan YiFeng&apos;s Blog</subtitle>
+    <generator uri="http://www.sixapart.com/movabletype/">Movable Type 5.13-en</generator>
+
+<entry>
+    <title>Javascript模块化编程（一）：模块的写法</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/10/javascript_module.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1747</id>
+
+    <published>2012-10-26T00:32:33Z</published>
+    <updated>2012-10-27T05:31:01Z</updated>
+
+    <summary>随着网站逐渐变成&quot;互联网应用程序&quot;，嵌入网页的Javascript代码越来越庞大，越来越复杂。...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="IT" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>随着网站逐渐变成"<a href="http://en.wikipedia.org/wiki/Web_application">互联网应用程序</a>"，嵌入网页的Javascript代码越来越庞大，越来越复杂。</p>]]>
+        <![CDATA[<p><img src="http://image.beekka.com/blog/201210/bg2012102601.jpg" /></p>
+
+<p>网页越来越像桌面程序，需要一个团队分工协作、进度管理、单元测试等等......开发者不得不使用软件工程的方法，管理网页的业务逻辑。</p>
+
+<p>Javascript模块化编程，已经成为一个迫切的需求。理想情况下，开发者只需要实现核心的业务逻辑，其他都可以加载别人已经写好的模块。</p>
+
+<p>但是，Javascript不是一种模块化编程语言，它不支持"<a href="http://www.ruanyifeng.com/blog/2012/07/three_ways_to_define_a_javascript_class.html">类</a>"（class），更遑论"模块"（module）了。（正在制定中的<a href="http://en.wikipedia.org/wiki/ECMAScript">ECMAScript标准</a>第六版，将正式支持"类"和"模块"，但还需要很长时间才能投入实用。）</p>
+
+<p>Javascript社区做了很多努力，在现有的运行环境中，实现"模块"的效果。本文总结了当前＂Javascript模块化编程＂的最佳实践，说明如何投入实用。虽然这不是初级教程，但是只要稍稍了解Javascript的基本语法，就能看懂。</p>
+
+<p><img src="http://image.beekka.com/blog/201210/bg2012102602.jpg" /></p>
+
+<p><strong>一、原始写法</strong></p>
+
+<p>模块就是实现特定功能的一组方法。</p>
+
+<p>只要把不同的函数（以及记录状态的变量）简单地放在一起，就算是一个模块。</p>
+
+<blockquote>
+
+<p>　　function m1(){<br />
+　　　　//...<br />
+　　}</p>
+
+<p>　　function m2(){<br />
+　　　　//...<br />
+　　}</p>
+
+</blockquote>
+
+<p>上面的函数m1()和m2()，组成一个模块。使用的时候，直接调用就行了。</p>
+
+<p>这种做法的缺点很明显："污染"了全局变量，无法保证不与其他模块发生变量名冲突，而且模块成员之间看不出直接关系。</p>
+
+<p><strong>二、对象写法</strong></p>
+
+<p>为了解决上面的缺点，可以把模块写成一个对象，所有的模块成员都放到这个对象里面。</p>
+
+<blockquote>
+
+<p>　　var module1 = new Object({</p>
+
+<p>　　　　_count : 0,</p>
+
+<p>　　　　m1 : function (){<br />
+　　　　　　//...<br />
+　　　　},</p>
+
+<p>　　　　m2 : function (){<br />
+　　　　　　//...<br />
+　　　　}</p>
+
+<p>　　});</p>
+
+</blockquote>
+
+<p>上面的函数m1()和m2(），都封装在module1对象里。使用的时候，就是调用这个对象的属性。</p>
+
+<blockquote>
+
+<p>　　module1.m1();</p>
+
+</blockquote>
+
+<p>但是，这样的写法会暴露所有模块成员，内部状态可以被外部改写。比如，外部代码可以直接改变内部计数器的值。</p>
+
+<blockquote>
+
+<p>　　module1._count = 5;</p>
+
+</blockquote>
+
+<p><strong>三、立即执行函数写法</strong></p>
+
+<p>使用"<a href="http://benalman.com/news/2010/11/immediately-invoked-function-expression/">立即执行函数</a>"（Immediately-Invoked Function Expression，IIFE），可以达到不暴露私有成员的目的。</p>
+
+<blockquote>
+
+<p>　　var module1 = (function(){</p>
+
+<p>　　　　var _count = 0;</p>
+
+<p>　　　　var m1 = function(){<br />
+　　　　　　//...<br />
+　　　　};</p>
+
+<p>　　　　var m2 = function(){<br />
+　　　　　　//...<br />
+　　　　};</p>
+
+<p>　　　　return {<br />
+　　　　　　m1 : m1,<br />
+　　　　　　m2 : m2<br />
+　　　　};</p>
+
+<p>　　})();</p>
+
+</blockquote>
+
+<p>使用上面的写法，外部代码无法读取内部的_count变量。</p>
+
+<blockquote>
+
+<p>　　console.info(module1._count); //undefined</p>
+
+</blockquote>
+
+<p>module1就是Javascript模块的基本写法。下面，再对这种写法进行加工。</p>
+
+<p><strong>四、放大模式</strong></p>
+
+<p>如果一个模块很大，必须分成几个部分，或者一个模块需要继承另一个模块，这时就有必要采用"放大模式"（augmentation）。</p>
+
+<blockquote>
+
+<p>　　var module1 = (function (mod){</p>
+
+<p>　　　　mod.m3 = function () {<br />
+　　　　　　//...<br />
+　　　　};</p>
+
+<p>　　　　return mod;</p>
+
+<p>　　})(module1);</p>
+
+</blockquote>
+
+<p>上面的代码为module1模块添加了一个新方法m3()，然后返回新的module1模块。</p>
+
+<p><strong>五、宽放大模式（Loose augmentation）</strong></p>
+
+<p>在浏览器环境中，模块的各个部分通常都是从网上获取的，有时无法知道哪个部分会先加载。如果采用上一节的写法，第一个执行的部分有可能加载一个不存在空对象，这时就要采用"宽放大模式"。</p>
+
+<blockquote>
+
+<p>　　var module1 = ( function (mod){</p>
+
+<p>　　　　//...</p>
+
+<p>　　　　return mod;</p>
+
+<p>　　})(window.module1 || {});</p>
+
+</blockquote>
+
+<p>与"放大模式"相比，＂宽放大模式＂就是"立即执行函数"的参数可以是空对象。</p>
+
+<p><strong>六、输入全局变量</strong></p>
+
+<p>独立性是模块的重要特点，模块内部最好不与程序的其他部分直接交互。</p>
+
+<p>为了在模块内部调用全局变量，必须显式地将其他变量输入模块。</p>
+
+<blockquote>
+
+<p>　　var module1 = (function ($, YAHOO) {</p>
+
+<p>　　　　//...</p>
+
+<p>　　})(jQuery, YAHOO);</p>
+
+</blockquote>
+
+<p>上面的module1模块需要使用jQuery库和YUI库，就把这两个库（其实是两个模块）当作参数输入module1。这样做除了保证模块的独立性，还使得模块之间的依赖关系变得明显。这方面更多的讨论，参见Ben Cherry的著名文章<a href="http://www.adequatelygood.com/2010/3/JavaScript-Module-Pattern-In-Depth">《JavaScript Module Pattern: In-Depth》</a>。</p>
+
+<p>这个系列的第二部分，将讨论如何在浏览器环境组织不同的模块、管理模块之间的依赖性。</p>
+
+<p>（完）</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/10/javascript_module.html">http://www.ruanyifeng.com/blog/2012/10/javascript_module.html</a></li>
+<li>最后修改时间：2012年10月27日 13:31</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title> 贝叶斯推断及其互联网应用（三）：拼写检查</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/10/spelling_corrector.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1746</id>
+
+    <published>2012-10-16T07:32:24Z</published>
+    <updated>2012-10-26T08:23:06Z</updated>
+
+    <summary>（这个系列的第一部分介绍了贝叶斯定理，第二部分介绍了如何过滤垃圾邮件，今天是第三部分。）...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="IT" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>（这个系列的第一部分介绍了<a href="http://www.ruanyifeng.com/blog/2011/08/bayesian_inference_part_one.html">贝叶斯定理</a>，第二部分介绍了如何<a href="http://www.ruanyifeng.com/blog/2011/08/bayesian_inference_part_two.html">过滤垃圾邮件</a>，今天是第三部分。）</p>]]>
+        <![CDATA[<p>使用Google的时候，如果你拼错一个单词，它会提醒你正确的拼法。</p>
+
+<p>比如，你不小心输入了seperate。</p>
+
+<p><img src="http://image.beekka.com/blog/201210/bg2012101601.png" /></p>
+
+<p>Google告诉你，<a href="http://www.ruanyifeng.com/blog/2004/06/seperate_separate.html">这个词</a>是不存在的，正确的拼法是separate。</p>
+
+<p><img src="http://image.beekka.com/blog/201210/bg2012101602.png" /></p>
+
+<p>这就叫做"拼写检查"（spelling corrector）。有好几种方法可以实现这个功能，Google使用的是基于贝叶斯推断的统计学方法。这种方法的特点就是快，很短的时间内处理大量文本，并且有很高的精确度（90%以上）。Google的研发总监<a href="http://en.wikipedia.org/wiki/Peter_Norvig">Peter Norvig</a>，写过一篇著名的<a href="http://norvig.com/spell-correct.html">文章</a>，解释这种方法的原理。</p>
+
+<p>下面我们就来看看，怎么利用贝叶斯推断，实现"拼写检查"。其实很简单，一小段代码就够了。</p>
+
+<p><strong>一、原理</strong></p>
+
+<p>用户输入了一个单词。这时分成两种情况：拼写正确，或者拼写不正确。我们把拼写正确的情况记做c（代表correct），拼写错误的情况记做w（代表wrong）。</p>
+
+<p>所谓"拼写检查"，就是在发生w的情况下，试图推断出c。从概率论的角度看，就是已知w，然后在若干个备选方案中，找出可能性最大的那个c，也就是求下面这个式子的最大值。</p>
+
+<blockquote>
+
+<p>　　P(c|w)</p>
+
+</blockquote>
+
+<p>根据贝叶斯定理：</p>
+
+<blockquote>
+
+<p>　　P(c|w) =  P(w|c) * P(c)  / P(w)</p>
+
+</blockquote>
+
+<p>对于所有备选的c来说，对应的都是同一个w，所以它们的P(w)是相同的，因此我们求的其实是</p>
+
+<blockquote>
+
+<p>　　P(w|c) * P(c)</p>
+
+</blockquote>
+
+<p>的最大值。</p>
+
+<p>P(c)的含义是，某个正确的词的出现"概率"，它可以用"频率"代替。如果我们有一个足够大的文本库，那么这个文本库中每个单词的出现频率，就相当于它的发生概率。某个词的出现频率越高，P(c)就越大。</p>
+
+<p>P(w|c)的含义是，在试图拼写c的情况下，出现拼写错误w的概率。这需要统计数据的支持，但是为了简化问题，我们假设两个单词在字形上越接近，就有越可能拼错，P(w|C)就越大。举例来说，相差一个字母的拼法，就比相差两个字母的拼法，发生概率更高。你想拼写单词hello，那么错误拼成hallo（相差一个字母）的可能性，就比拼成haallo高（相差两个字母）。</p>
+
+<p>所以，我们只要找到与输入单词在字形上最相近的那些词，再在其中挑出出现频率最高的一个，就能实现 P(w|c) * P(c) 的最大值。</p>
+
+<p><strong>二、算法</strong></p>
+
+<p>最简单的算法，只需要四步就够了。</p>
+
+<p><strong>第一步，建立一个足够大的文本库。</strong></p>
+
+<p>网上有一些免费来源，比如<a href="http://www.gutenberg.org/wiki/Main_Page">古登堡计划</a>、<a href="http://en.wiktionary.org/wiki/Wiktionary:Frequency_lists">Wiktionary</a>、<a href="http://www.kilgarriff.co.uk/bnc-readme.html">英国国家语料库</a>等等。</p>
+
+<p><strong>第二步，取出文本库的每一个单词，统计它们的出现频率。</strong></p>
+
+<p><strong>第三步，根据用户输入的单词，得到其所有可能的拼写相近的形式。</strong></p>
+
+<p>所谓"拼写相近"，指的是两个单词之间的"编辑距离"（edit distance）不超过2。也就是说，两个词只相差1到2个字母，只通过----删除、交换、更改和插入----这四种操作中的一种，就可以让一个词变成另一个词。</p>
+
+<p><strong>第四步，比较所有拼写相近的词在文本库的出现频率。频率最高的那个词，就是正确的拼法。</strong></p>
+
+<p>根据Peter Norvig的验证，这种算法的精确度大约为60%-70%（10个拼写错误能够检查出6个。）虽然不令人满意，但是能够接受。毕竟它足够简单，计算速度极快。（本文的最后部分，将详细讨论这种算法的缺陷在哪里。）</p>
+
+<p><strong>三、代码</strong></p>
+
+<p>我们使用Python语言，实现上一节的算法。</p>
+
+<p><strong>第一步，把网上下载的文本库保存为<a href="http://norvig.com/big.txt">big.txt</a>文件。</strong>这步不需要编程。</p>
+
+<p><strong>第二步，加载Python的正则语言模块（re）和collections模块，后面要用到。</strong></p>
+
+<blockquote>
+
+<p>　　import re, collections</p>
+
+</blockquote>
+
+<p><strong>第三步，定义words()函数，用来取出文本库的每一个词。</strong></p>
+
+<blockquote>
+
+<p>　　def words(text): return re.findall('[a-z]+', text.lower())</p>
+
+</blockquote>
+
+<p>lower()将所有词都转成小写，避免因为大小写不同，而被算作两个词。</p>
+
+<p><strong>第四步，定义一个train()函数，用来建立一个"字典"结构。</strong>文本库的每一个词，都是这个"字典"的键；它们所对应的值，就是这个词在文本库的出现频率。</p>
+
+<blockquote>
+
+<p>　　def train(features):</p>
+
+<p>　　　　model = collections.defaultdict(lambda: 1)</p>
+
+<p>　　　　for f in features:</p>
+
+<p>　　　　　　model[f] += 1</p>
+
+<p>　　　　return model</p>
+
+</blockquote>
+
+<p>collections.defaultdict(lambda: 1)的意思是，每一个词的默认出现频率为1。这是针对那些没有出现在文本库的词。如果一个词没有在文本库出现，我们并不能认定它就是一个不存在的词，因此将每个词出现的默认频率设为1。以后每出现一次，频率就增加1。</p>
+
+<p><strong>第五步，使用words()和train()函数，生成上一步的"词频字典"，放入变量NWORDS。</strong></p>
+
+<blockquote>
+
+<p>　　NWORDS = train(words(file('big.txt').read()))</p>
+
+</blockquote>
+
+<p><strong>第六步，定义edits1()函数，用来生成所有与输入参数word的"编辑距离"为1的词。</strong></p>
+
+<blockquote>
+
+<p>　　alphabet = 'abcdefghijklmnopqrstuvwxyz'</p>
+
+<p>　　def edits1(word):</p>
+
+<p>　　　　splits     = [(word[:i], word[i:]) for i in range(len(word) + 1)]</p>
+
+<p>　　　　deletes    = [a + b[1:] for a, b in splits if b]</p>
+
+<p>　　　　transposes = [a + b[1] + b[0] + b[2:] for a, b in splits if len(b)>1]</p>
+
+<p>　　　　replaces   = [a + c + b[1:] for a, b in splits for c in alphabet if b]</p>
+
+<p>　　　　inserts    = [a + c + b     for a, b in splits for c in alphabet]</p>
+
+<p>　　　　return set(deletes + transposes + replaces + inserts)</p>
+
+</blockquote>
+
+<p>edit1()函数中的几个变量的含义如下：</p>
+
+<blockquote>
+
+<p>　　（1）<strong>splits</strong>：将word依次按照每一位分割成前后两半。比如，'abc'会被分割成 [('', 'abc'), ('a', 'bc'), ('ab', 'c'), ('abc', '')] 。</p>
+
+<p>　　（2）<strong>beletes</strong>：依次删除word的每一位后、所形成的所有新词。比如，'abc'对应的deletes就是 ['bc', 'ac', 'ab'] 。</p>
+
+<p>　　（3）<strong>transposes</strong>：依次交换word的邻近两位，所形成的所有新词。比如，'abc'对应的transposes就是  ['bac', 'acb'] 。</p>
+
+<p>　　（4）<strong>replaces</strong>：将word的每一位依次替换成其他25个字母，所形成的所有新词。比如，'abc'对应的replaces就是 ['abc', 'bbc', 'cbc', ... , 'abx', ' aby', 'abz' ] ，一共包含78个词（26 ×  3）。</p>
+
+<p>　　（5）<strong>inserts</strong>：在word的邻近两位之间依次插入一个字母，所形成的所有新词。比如，'abc' 对应的inserts就是['aabc', 'babc', 'cabc', ..., 'abcx', 'abcy', 'abcz']，一共包含104个词（26 × 4）。</blockquote></p>
+
+<p>最后，edit1()返回deletes、transposes、replaces、inserts的合集，这就是与word"编辑距离"等于1的所有词。对于一个n位的词，会返回54n+25个词。</p>
+
+<p><strong>第七步，定义edit2()函数，用来生成所有与word的"编辑距离"为2的词语。</strong></p>
+
+<blockquote>
+
+<p>　　def edits2(word):</p>
+
+<p>　　　　return set(e2 for e1 in edits1(word) for e2 in edits1(e1))</p>
+
+</blockquote>
+
+<p>但是这样的话，会返回一个 (54n+25) * (54n+25) 的数组，实在是太大了。因此，我们将edit2()改为known_edits2()函数，将返回的词限定为在文本库中出现过的词。</p>
+
+<blockquote>
+
+<p>　　def known_edits2(word):</p>
+
+<p>　　　　return set(e2 for e1 in edits1(word) for e2 in edits1(e1) if e2 in NWORDS)</p>
+
+</blockquote>
+
+<p><strong>第八步，定义correct()函数，用来从所有备选的词中，选出用户最可能想要拼写的词。</strong></p>
+
+<blockquote>
+
+<p>　　def known(words): return set(w for w in words if w in NWORDS)</p>
+
+<p>　　def correct(word):</p>
+
+<p>　　　　candidates = known([word]) or known(edits1(word)) or known_edits2(word) or [word]</p>
+
+<p>　　　　return max(candidates, key=NWORDS.get)</p>
+
+</blockquote>
+
+<p>我们采用的规则为：</p>
+
+<blockquote>
+
+<p>　　（1）如果word是文本库现有的词，说明该词拼写正确，直接返回这个词；</p>
+
+<p>　　（2）如果word不是现有的词，则返回"编辑距离"为1的词之中，在文本库出现频率最高的那个词；</p>
+
+<p>　　（3）如果"编辑距离"为1的词，都不是文本库现有的词，则返回"编辑距离"为2的词中，出现频率最高的那个词；</p>
+
+<p>　　（4）如果上述三条规则，都无法得到结果，则直接返回word。</p>
+
+</blockquote>
+
+<p><strong>至此，<a href="http://pastebin.com/UVwuBrcs">代码</a>全部完成，合起来一共21行。</strong></p>
+
+<blockquote>
+
+<p>　　import re, collections</p>
+
+<p>　　def words(text): return re.findall('[a-z]+', text.lower())</p>
+
+<p>　　def train(features):</p>
+
+<p>　　　　model = collections.defaultdict(lambda: 1)</p>
+
+<p>　　　　for f in features:</p>
+
+<p>　　　　　　model[f] += 1</p>
+
+<p>　　　　return model</p>
+
+<p>　　NWORDS = train(words(file('big.txt').read()))</p>
+
+<p>　　alphabet = 'abcdefghijklmnopqrstuvwxyz'</p>
+
+<p>　　def edits1(word):</p>
+
+<p>　　　　splits     = [(word[:i], word[i:]) for i in range(len(word) + 1)]</p>
+
+<p>　　　　deletes    = [a + b[1:] for a, b in splits if b]</p>
+
+<p>　　　　transposes = [a + b[1] + b[0] + b[2:] for a, b in splits if len(b)>1]</p>
+
+<p>　　　　replaces   = [a + c + b[1:] for a, b in splits for c in alphabet if b]</p>
+
+<p>　　　　inserts    = [a + c + b     for a, b in splits for c in alphabet]</p>
+
+<p>　　　　return set(deletes + transposes + replaces + inserts)</p>
+
+<p>　　def known_edits2(word):</p>
+
+<p>　　　　return set(e2 for e1 in edits1(word) for e2 in edits1(e1) if e2 in NWORDS)</p>
+
+<p>　　def known(words): return set(w for w in words if w in NWORDS)</p>
+
+<p>　　def correct(word):</p>
+
+<p>　　　　candidates = known([word]) or known(edits1(word)) or known_edits2(word) or [word]</p>
+
+<p>　　　　return max(candidates, key=NWORDS.get)</p>
+
+</blockquote>
+
+<p>使用方法如下：</p>
+
+<blockquote>
+
+<p>　　>>> correct('speling')</p>
+
+<p>　　'spelling'</p>
+
+<p>　　>>> correct('korrecter')</p>
+
+<p>　　'corrector'</p>
+
+</blockquote>
+
+<p><strong>四、缺陷</strong></p>
+
+<p>我们使用的这种算法，有一些缺陷，如果投入生产环境，必须在这些方面加入改进。</p>
+
+<p><strong>（1）文本库必须有很高的精确性，不能包含拼写错误的词。</strong></p>
+
+<p>如果用户输入一个错误的拼法，文本库恰好包含了这种拼法，它就会被当成正确的拼法。</p>
+
+<p><strong>（2）对于不包含在文本库中的新词，没有提出解决办法。</strong></p>
+
+<p>如果用户输入一个新词，这个词不在文本库之中，就会被当作错误的拼写进行纠正。</p>
+
+<p><strong>（3）程序返回的是"编辑距离"为1的词，但某些情况下，正确的词的"编辑距离"为2。</strong></p>
+
+<p>比如，用户输入reciet，会被纠正为recite（编辑距离为1）,但用户真正想要输入的词是receipt（编辑距离为2）。也就是说，"编辑距离"越短越正确的规则，并非所有情况下都成立。</p>
+
+<p><strong>（4）有些常见拼写错误的"编辑距离"大于2。</strong></p>
+
+<p>这样的错误，程序无法发现。下面就是一些例子，每一行前面那个词是正确的拼法，后面那个则是常见的错误拼法。</p>
+
+<blockquote>
+
+<p>  purple perpul<br />
+  curtains courtens<br />
+  minutes muinets<br />
+  successful sucssuful<br />
+  inefficient ineffiect<br />
+  availability avaiblity<br />
+  dissension desention<br />
+  unnecessarily unessasarily<br />
+  necessary nessasary<br />
+  unnecessary unessessay<br />
+  night nite<br />
+  assessing accesing<br />
+  necessitates nessisitates</p>
+
+</blockquote>
+
+<p><strong>（5）用户输入的词的拼写正确，但是其实想输入的是另一个词。</strong></p>
+
+<p>比如，用户输入是where，这个词拼写正确，程序不会纠正。但是，用户真正想输入的其实是were，不小心多打了一个h。</p>
+
+<p><strong>（6）程序返回的是出现频率最高的词，但用户真正想输入的是另一个词。</strong></p>
+
+<p>比如，用户输入ther，程序会返回the，因为它的出现频率最高。但是，用户真正想输入的其实是their，少打了一个i。也就是说，出现频率最高的词，不一定就是用户想输入的词。</p>
+
+<p><strong>（7）某些词有不同的拼法，程序无法辨别。</strong></p>
+
+<p>比如，英国英语和美国英语的拼法不一致。英国用户输入'humur'，应该被纠正为'humour'；美国用户输入'humur'，应该被纠正为'humor'。但是，我们的程序会统一纠正为'humor'。</p>
+
+<p>（完）</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/10/spelling_corrector.html">http://www.ruanyifeng.com/blog/2012/10/spelling_corrector.html</a></li>
+<li>最后修改时间：2012年10月26日 16:23</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title>Google日历简易版 2.0</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/10/google_calendar_lite_reloaded.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1745</id>
+
+    <published>2012-10-07T15:58:35Z</published>
+    <updated>2012-10-27T02:30:40Z</updated>
+
+    <summary>长假期间，我写了一个小程序，现在正式发布。...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="IT" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>长假期间，我写了一个小程序，现在正式发布。</p>]]>
+        <![CDATA[<p>大家用不用<a href="https://www.google.com/calendar/">Google日历</a>？</p>
+
+<p><img src="http://image.beekka.com/blog/201210/bg2012100701.jpg" /></p>
+
+<p>它可以用来规划日程、记录事项、甚至写日记，既安全（数据保存在Google的机房）又方便（各种平台都能访问），甚至还很贴心地提供<a href="http://mobile.zol.com.cn/249/2493609.html">手机同步</a>和<a href="http://www.williamlong.info/archives/935.html">免费短信提醒</a>。</p>
+
+<p>相信很多人与我一样，非常需要这个产品。但是，又不喜欢它的界面：拥挤丑陋，辨识困难，操作麻烦。于是，2008年，我<a href="http://www.ruanyifeng.com/blog/2008/06/google_calendar_lite.html">写了</a>一个"Google日历简易版"。</p>
+
+<p>今年四月份，Google启用新版本API，我的那个程序彻底无法使用了。考虑到还有需求，利用这几天，我索性就重写了一遍。</p>
+
+<p>现在就让我，正式推出<strong><a href="http://calendar.ruanyifeng.com">"Google日历简易版 2.0"</a></strong>！</p>
+
+<p><a href="http://calendar.ruanyifeng.com"><img src="http://image.beekka.com/blog/201210/bg2012100702.png" /></a></p>
+
+<blockquote>
+
+<p>　　＊　操作简便，只需鼠标一点，就可以看到近期事件；</p>
+
+<p>　　＊　界面清爽，放大了字体，易于阅读；</p>
+
+<p>　　＊　快速安全，直接与Google交互，全程https加密通信。</p>
+
+</blockquote>
+
+<p>欢迎大家试用，看看有没有bug。网址是：</p>
+
+<blockquote>
+
+<p>　　<strong><a href="http://calendar.ruanyifeng.com">http://calendar.ruanyifeng.com</a></strong></p>
+
+</blockquote>
+
+<p>两点使用说明：</p>
+
+<blockquote>
+
+<p>　　1）支持各大浏览器的最新版本，IE6、7、8、9除外（因为它们不支持ajax跨域）。</p>
+
+<p>　　2）这个程序对Javascipt的要求比较高，移动终端方面，我的Android平板可以使用，但是Android手机不行。有ios设备的朋友，帮忙看看，ipad/iphone能不能用。</p>
+
+</blockquote>
+
+<p>======================================</p>
+
+<p>（关于发布软件的内容到此为止，接下来是插播时间，我实在忍不住，想谈谈Google。）</p>
+
+<p>这个程序全靠Google的<a href="https://developers.google.com/google-apps/calendar/">API</a>，但是Google是怎么开放API的？用户是不知道，开发者看了，心都凉了。</p>
+
+<p>今年四月生效的API<a href="https://developers.google.com/google-apps/calendar/v3/reference/">第三版</a>，比<a href="https://developers.google.com/google-apps/calendar/v2/developers_guide_protocol">第二版</a>少了很多功能。其中有两个，影响尤其巨大。</p>
+
+<blockquote>
+
+<p>　　1.　只提供所有事件（按日期）升序排列，不提供（按日期）降序排列。</p>
+
+<p>　　2.　不提供某个时间段内的事件总数。</p>
+
+</blockquote>
+
+<p>少了这两个基本功能，还怎么玩呀？！你写了一个日历程序，可是连用户的最新事件都取不到......（我现在的解决方法是，一个时间段内限定取回30个事件。如果超出这个数量，只有用户自行缩短时间段了。）</p>
+
+<p>此外，Google还规定，日历API每天请求上限是10000次。你没有看错，真的只有四个零。我数了好几遍，都不敢相信自己的眼睛。</p>
+
+<p>这就是说，你的用户总数，每天最多只能有几百人，Google不允许你发展更多的用户。（相比之下，Google的<a href="http://www.ruanyifeng.com/blog/2011/01/api_for_google_s_url_shortener.html">短网址API</a>，每天请求上限是100万次！）所以，基于这个API的任何程序，大概只能是写写玩玩，不可能考虑运营与发展。</p>
+
+<p>我认为，Google这样地封闭平台，无非就是为了防止外部开发者与其竞争，尽量把用户留在自家网站上。这种鼠目寸光、画地为牢的行为，哪来还有半点理想主义的色彩？</p>
+
+<p>Google，枉费我还为你<a href="http://www.ruanyifeng.com/blog/2010/01/google_to_quit_china.html">呐喊</a>过！</p>
+
+<p>========================================</p>
+
+<p>不管怎么说，这个<a href="http://calendar.ruanyifeng.com/">"Google日历简易版"</a>，我还是会维护下去的（毕竟眼前找不到更好的在线日历）。</p>
+
+<p>下一次大版本的更新，我打算实现下面两个功能：</p>
+
+<blockquote>
+
+<p>　　1.　颜色标签，不同事件采用不同的背景色；</p>
+
+<p>　　2.　所有事件都用LocalStorage储存在本地（要不是想到得太晚，这一次我就应该实现这个功能）。</p>
+
+</blockquote>
+
+<p>顺便提一下，这一次我是用<a href="http://twitter.github.com/bootstrap/">Bootstrap</a>框架开发的，感觉它方便好用，效果也不错。但是下一次，大概不会用它了，因为觉得不够灵活，很多地方都被它限制住了。<a href="http://foundation.zurb.com/">Foundation</a>框架对我有可能是一个更好的选择。</p>
+
+<p>（完）<br />
+</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/10/google_calendar_lite_reloaded.html">http://www.ruanyifeng.com/blog/2012/10/google_calendar_lite_reloaded.html</a></li>
+<li>最后修改时间：2012年10月27日 10:30</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title>网站的无密码登录</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/10/password-less_login.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1744</id>
+
+    <published>2012-10-03T13:00:03Z</published>
+    <updated>2012-10-26T13:39:32Z</updated>
+
+    <summary>大部分网站，都要求用户登录。...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="IT" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>大部分网站，都要求用户登录。</p>]]>
+        <![CDATA[<p>常见的做法，是让用户注册一个账户。</p>
+
+<p><img src="http://image.beekka.com/blog/201210/bg2012100301.png" /></p>
+
+<p>这种做法并不让人满意。</p>
+
+<p>对于用户来说，每个网站必须记住一个密码，非常麻烦；对于开发者来说，必须承担保护密码的责任，一旦密码泄漏，对网站的业务和信誉都是<a href="http://www.cnbeta.com/articles/166937.htm">巨大打击</a>。</p>
+
+<p>所以，很早以前，人们就开始设想"无密码登录"（password-less login）。这对用户和网站，都将是极大的减负。</p>
+
+<p>本文先回顾"无密码登录"的几种常见做法，然后探讨一种最简单的实现。</p>
+
+<p><strong>一、OpenID</strong></p>
+
+<p><a href="http://openid.net/">OpenID</a>是最早提出的一种无密码登录。</p>
+
+<p><img src="http://image.beekka.com/blog/201210/bg2012100302.jpg" /></p>
+
+<p>它的设想是这样的：互联网上每一个网址（URL），都指向一个独一无二的网页，这说明网址具有唯一性。因此，可以用网址来标识用户。</p>
+
+<p>所以，使用OpenID的网站，不要求用户输入"用户名"，而要求用户输入一个代表其身份的网址。然后，向该网址进行求证，如果得到证实，就允许用户登录，从而实现"无密码登录"。</p>
+
+<p>OpenID有两个很大的缺点：一是需要服务器端支持，二是使用网址表示身份，违背直觉，普通用户难以理解。因此，始终无法得到推广。</p>
+
+<p><strong>二、第三方账户</strong></p>
+
+<p>OpenID的实质，是让第三方网站认证用户身份。那么很显然，这等同于用户在第三方网站登录。</p>
+
+<p>因此，可以直接告诉用户，使用第三方帐号登录（前提是对方支持OpenID）。</p>
+
+<p><img src="http://image.beekka.com/blog/201210/bg2012100303.png" /></p>
+
+<p>这样做的优点是比较直观，用户容易接受；缺点是自身的业务，从此多多少少要依赖第三方网站。比如，现在很多网站使用Facebook帐号登录，一旦Facebook出现故障，这些网站都会受到影响。</p>
+
+<p><strong>三、Persona</strong></p>
+
+<p>去年，Mozilla提出了<a href="http://www.mozilla.org/en-US/persona/">Persona</a>方案，号称是无密码登录的<a href="http://labs.newsint.co.uk/blog/2012/10/why-mozilla-persona-is-the-right-answer-to-the-question-of-identity/">终极解决方案</a>。</p>
+
+<p><img src="http://image.beekka.com/blog/201210/bg2012100304.jpg" /></p>
+
+<p>它与OpenID异曲同工。后者用网址标识用户，它用Email标识用户。用户键入Email地址以后，网站向Email服务器请求认证。</p>
+
+<p>虽然这种方案还处在推广期，效果有待观察。但是，我目前不太看好它。一则，它的<a href="https://developer.mozilla.org/en-US/docs/Persona/Protocol_Overview">技术要求</a>和<a href="http://lloyd.io/how-browserid-works">流程</a>，比OpenID更复杂，无法用一句话讲清楚；二则，它要求服务器端支持，很难想象世界上大部分Email服务器都会部署Persona代码。</p>
+
+<p><strong>四、OAuth</strong></p>
+
+<p><a href="http://oauth.net/">OAuth</a>协议其实与"第三方帐户"是一回事。</p>
+
+<p><img src="http://image.beekka.com/blog/201210/bg2012100305.png" /></p>
+
+<p>"第三方账户"是第三方网站提供用户身份认证，属于"认证"服务（authentication）；OAuth则是更进一步，第三方网站允许你直接操作它的用户数据，属于"授权"服务（authorization）。</p>
+
+<p>因为涉及到用户数据的改变，所以OAuth认证比Openid认证要求更严格。通常，只有针对某个第三方网站的外部服务，才需要用到OAuth；如果只是单纯地区分用户身份，其实没必要用它。</p>
+
+<p><strong>五、Email一次性登录</strong></p>
+
+<p>上面四种登录方法，是目前主流的"无密码登录"。下面，我想介绍一种最简单的实现，它是美国程序员Ben Brown在今年7月份<a href="http://notes.xoxco.com/post/27999787765/is-it-time-for-password-less-login">提出来</a>的。</p>
+
+<p>他的做法很简单。用户登录的时候，只显示一个Email地址输入框。</p>
+
+<p><img src="http://image.beekka.com/blog/201210/bg2012100306.png" /></p>
+
+<p>用户输入Email地址以后，网站就向该地址发出一封邮件，里面包含了一个登录链接。用户点击这个链接，就证明他/她确实是这个邮箱的主人，身份有效，从而实现登录。</p>
+
+<p><img src="http://image.beekka.com/blog/201210/bg2012100307.png" /></p>
+
+<p>登录链接只在一段时间内有效，但是可以通过cookie，让用户长时间处在登录状态。如果cookie失效，则重新向用户邮箱发出另一个登录链接即可。</p>
+
+<p>由于整个认证过程，都通过电子邮件完成，彻底实现"无密码登录"，而且操作流程很自然，易于理解。更重要的是，它使用现有的Email协议，不需要服务器端部署新的代码，具有最好的兼容性。</p>
+
+<p>主要缺点是，它需要用户额外查看一次邮箱，稍显麻烦；它也不适合那种用户无法打开Email的场合，比如在朋友家中上网。因此，使用它的网站，还必须部署备用的登录方式。</p>
+
+<p>总的来说，我觉得这是一个简单易行的好方法，以后做网站的时候，打算尝试一下。</p>
+
+<p>想听听大家的意见，你觉得这种方法可行吗？</p>
+
+<p>（完）<br />
+</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/10/password-less_login.html">http://www.ruanyifeng.com/blog/2012/10/password-less_login.html</a></li>
+<li>最后修改时间：2012年10月26日 21:39</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title>虚数的意义</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/09/imaginary_number.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1742</id>
+
+    <published>2012-09-24T15:49:30Z</published>
+    <updated>2012-10-26T08:35:22Z</updated>
+
+    <summary>有人在Stack Exchange问了一个问题：...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="Science" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>有人在<a href="http://math.stackexchange.com/questions/199676/what-are-imaginary-numbers">Stack Exchange</a>问了一个问题：</p>]]>
+        <![CDATA[<blockquote>
+
+<p>　　"我一直觉得虚数（imaginary number）很难懂。</p>
+
+<p>　　中学老师说，虚数就是-1的平方根。</p>
+
+<p>　　<img src="http://chart.googleapis.com/chart?cht=tx&chl=i%3D%5Csqrt%7B-1%7D&chs=80" style="border:none;" /></p>
+
+<p>　　可是，什么数的平方等于-1呢？计算器直接显示出错！</p>
+
+<p>　　直到今天，我也没有搞懂。谁能解释，虚数到底是什么？</p>
+
+<p>　　它有什么用？"</p>
+
+</blockquote>
+
+<p>帖子的下面，很多人给出了自己的解释，还推荐了一篇非常棒的文章<a href="http://betterexplained.com/articles/a-visual-intuitive-guide-to-imaginary-numbers/">《虚数的图解》</a>。我读后恍然大悟，醍醐灌顶，原来虚数这么简单，一点也不奇怪和难懂！</p>
+
+<p>下面，我就用自己的语言，讲述我所理解的虚数。</p>
+
+<p><strong>一、什么是虚数？</strong></p>
+
+<p>首先，假设有一根数轴，上面有两个反向的点：+1和-1。</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012092401.png" /></p>
+
+<p>这根数轴的正向部分，可以绕原点旋转。显然，逆时针旋转180度，+1就会变成-1。</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012092402.png" /></p>
+
+<p>这相当于两次逆时针旋转90度。</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012092403.png" /></p>
+
+<p>因此，我们可以得到下面的关系式：</p>
+
+<blockquote>
+
+<p>　　(+1) * (逆时针旋转90度) * (逆时针旋转90度) = (-1)</p>
+
+</blockquote>
+
+<p>如果把+1消去，这个式子就变为：</p>
+
+<blockquote>
+
+<p>　　(逆时针旋转90度)^2 = (-1)</p>
+
+</blockquote>
+
+<p>将"逆时针旋转90度"记为 i ：</p>
+
+<blockquote>
+
+<p>　　i^2 = (-1)</p>
+
+</blockquote>
+
+<p>这个式子很眼熟，它就是虚数的定义公式。</p>
+
+<p>所以，我们可以知道，<strong>虚数 i 就是逆时针旋转90度，i 不是一个数，而是一个旋转量。</strong></p>
+
+<p><strong>二、复数的定义</strong></p>
+
+<p>既然 i 表示旋转量，我们就可以用 i ，表示任何实数的旋转状态。</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012092404.png" /></p>
+
+<p>将实数轴看作横轴，虚数轴看作纵轴，就构成了一个二维平面。旋转到某一个角度的任何正实数，必然唯一对应这个平面中的某个点。</p>
+
+<p>只要确定横坐标和纵坐标，比如( 1 , i )，就可以确定某个实数的旋转量（45度）。</p>
+
+<p>数学家用一种特殊的表示方法，表示这个二维坐标：用 + 号把横坐标和纵坐标连接起来。比如，把 ( 1 , i ) 表示成 1 + i 。<strong>这种表示方法就叫做复数（complex number），其中 1 称为实数部，i 称为虚数部。</strong></p>
+
+<p>为什么要把二维坐标表示成这样呢，下一节告诉你原因。</p>
+
+<p><strong>三、虚数的作用：加法</strong></p>
+
+<p>虚数的引入，大大方便了涉及到旋转的计算。</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012092405.png" /></p>
+
+<p>比如，物理学需要计算"力的合成"。假定一个力是 3 + i ，另一个力是 1 + 3i ，请问它们的合成力是多少？</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012092406.png" /></p>
+
+<p>根据"平行四边形法则"，你马上得到，合成力就是 ( 3 + i ) + ( 1 + 3i ) = ( 4 + 4i )。</p>
+
+<p>这就是虚数加法的物理意义。</p>
+
+<p><strong>四、虚数的作用：乘法</strong></p>
+
+<p>如果涉及到旋转角度的改变，处理起来更方便。</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012092407.png" /></p>
+
+<p>比如，一条船的航向是 3 + 4i 。</p>
+
+<p>如果该船的航向，逆时针增加45度，请问新航向是多少？</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012092408.png" /></p>
+
+<p>45度的航向就是 1 + i 。计算新航向，只要把这两个航向 3 + 4i 与 1 + i 相乘就可以了（原因在下一节解释）：</p>
+
+<blockquote>
+
+<p>　　( 3 + 4i ) * ( 1 + i ) = ( -1 + 7i )</p>
+
+</blockquote>
+
+<p>所以，该船的新航向是 -1 + 7i 。</p>
+
+<p>如果航向逆时针增加90度，就更简单了。因为90度的航向就是 i ，所以新航向等于：</p>
+
+<blockquote>
+
+<p>　　( 3 + 4i ) * i = ( -4 + 3i )</p>
+
+</blockquote>
+
+<p>这就是虚数乘法的物理意义：改变旋转角度。</p>
+
+<p><strong>五、虚数乘法的数学证明</strong></p>
+
+<p>为什么一个复数改变旋转角度，只要做乘法就可以了？</p>
+
+<p>下面就是它的数学证明，实际上很简单。</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012092409.png" /></p>
+
+<p>任何复数 a + bi，都可以改写成旋转半径 r 与横轴夹角 θ 的形式。</p>
+
+<p>假定现有两个复数 a + bi 和 c + di，可以将它们改写如下：</p>
+
+<blockquote>
+
+<p>　　a + bi = r1 * ( cosα + isinα )</p>
+
+<p>　　c + di = r2 * ( cosβ + isinβ )</p>
+
+</blockquote>
+
+<p><!--</p>
+
+<p><img src="http://chart.googleapis.com/chart?cht=tx&chl=a%2Bbi%3Dr_%7B1%7D(cos%5Ctheta_%7B1%7D%20%2B%20isin%5Ctheta_%7B1%7D)&chs=50" style="border:none;" /><br />
+　　<br />
+<img src="http://chart.googleapis.com/chart?cht=tx&chl=c%2Bdi%3Dr_%7B2%7D(cos%5Ctheta_%7B2%7D%20%2B%20isin%5Ctheta_%7B2%7D)&chs=50" style="border:none;" /></p>
+
+<p>--></p>
+
+<p>这两个复数相乘，( a + bi )( c + di ) 就相当于</p>
+
+<blockquote>
+
+<p>　　r1 * r2 * ( cosα + isinα ) * ( cosβ + isinβ )</p>
+
+</blockquote>
+
+<p><!--<img src="http://chart.googleapis.com/chart?cht=tx&chl=r_%7B1%7Dr_%7B2%7D(cos%5Ctheta_%7B1%7D%20%2B%20isin%5Ctheta_%7B1%7D)(cos%5Ctheta_%7B2%7D%20%2B%20isin%5Ctheta_%7B2%7D)&chs=50" style="border:none;" />--></p>
+
+<p>展开后面的乘式，得到</p>
+
+<blockquote>
+
+<p>　　cosα * cosβ - sinα * sinβ + i( cosα * sinβ + sinα * cosβ )</p>
+
+</blockquote>
+
+<p><!--<img src="http://chart.googleapis.com/chart?cht=tx&chl=cos%5Ctheta_%7B1%7Dcos%5Ctheta_%7B2%7D-sin%5Ctheta_%7B1%7Dsin%5Ctheta_%7B2%7D%2Bi(sin%5Ctheta_%7B1%7Dcos%5Ctheta_%7B2%7D%2Bcos%5Ctheta_%7B1%7Dsin%5Ctheta_%7B2%7D)&chs=40" style="border:none;" />--></p>
+
+<p>根据三角函数公式，上面的式子就等于</p>
+
+<blockquote>
+
+<p>　　cos(α+β) + isin(α+β)</p>
+
+</blockquote>
+
+<p><!--<img src="http://chart.googleapis.com/chart?cht=tx&chl=cos(%5Ctheta_%7B1%7D%2B%5Ctheta_%7B2%7D)%2Bisin(%5Ctheta_%7B1%7D%2B%5Ctheta_%7B2%7D)&chs=40" style="border:none;" />--></p>
+
+<p>所以，</p>
+
+<blockquote>
+
+<p>　　( a + bi )( c + di )　＝　r1 * r2 * ( cos(α+β) + isin(α+β) )</p>
+
+</blockquote>
+
+<p><!-- <img src="http://chart.googleapis.com/chart?cht=tx&chl=(a%2Bbi)(c%2Bdi)%3Dr_%7B1%7Dr_%7B2%7D(cos(%5Ctheta_%7B1%7D%2B%5Ctheta_%7B2%7D)%2Bisin(%5Ctheta_%7B1%7D%2B%5Ctheta_%7B2%7D))&chs=40" style="border:none;" />--></p>
+
+<p>这就证明了，两个复数相乘，就等于旋转半径相乘、旋转角度相加。</p>
+
+<p>（完）</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/09/imaginary_number.html">http://www.ruanyifeng.com/blog/2012/09/imaginary_number.html</a></li>
+<li>最后修改时间：2012年10月26日 16:35</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title>台湾四极</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/09/extreme_points_of_taiwan.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1741</id>
+
+    <published>2012-09-14T22:50:13Z</published>
+    <updated>2012-10-14T13:34:07Z</updated>
+
+    <summary>1....</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="World" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>1.</p>]]>
+        <![CDATA[<p><img src="http://image.beekka.com/blog/201209/bg2012091401.jpg" /></p>
+
+<p>从台湾回来，已经一个多月了。那段日子，时常浮现眼前。</p>
+
+<p>2.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091402.jpg" /></p>
+
+<p>台湾是一个美丽的岛屿，高山大海，风景壮丽。如果你有时间，我建议开车或骑摩托车"环岛游"。（骑自行车？别开玩笑了......）</p>
+
+<p>3.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091403.jpg" /></p>
+
+<p>我没有时间"环岛"，就定下了另外一个目标----<a href="http://zh.wikipedia.org/wiki/%E4%B8%AD%E8%8F%AF%E6%B0%91%E5%9C%8B%E5%9C%B0%E7%90%86%E6%A5%B5%E9%BB%9E#.E5.8F.B0.E7.81.A3.E6.9C.AC.E5.B3.B6.E7.9A.84.E6.9D.B1.E8.A5.BF.E5.8D.97.E5.8C.97.E6.A5.B5.E9.BB.9E">台湾的四个地理极点</a>！</p>
+
+<p>4.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091404.png" /></p>
+
+<p>台湾本岛的最北端"富贵角"，最东端"三貂角"，最南端"鹅銮鼻"，最西端"顶额沙洲"。我暗下决心，要把它们走遍。</p>
+
+<p>5.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091405.jpg" /></p>
+
+<p>最北端"富贵角"，离<a href="http://www.ruanyifeng.com/blog/2012/06/taipei.html">台北</a>最近，我就先去那里。</p>
+
+<p>6.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091406.jpg" /></p>
+
+<p>我从台北搭客运，沿阳金公路（该公路穿越阳明山，沿途景色优美）北上，到达金山镇，在金山区公所下车。</p>
+
+<p>7.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091407.jpg" /></p>
+
+<p>然后，在区公所对面，搭乘开往淡水的客运，在"灯台口"下车。</p>
+
+<p>8.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091408.jpg" /></p>
+
+<p>往里走，就是富贵角了，会先经过一个渔港。</p>
+
+<p>9.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091409.jpg" /></p>
+
+<p>沿土路走到底，就会看到"富贵角灯塔"的指示牌了。</p>
+
+<p>10.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091410.jpg" /></p>
+
+<p>沿着平缓的上坡道，走10分钟，在一个拐弯之后，灯塔就出现了。</p>
+
+<p>11.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091411.jpg" /></p>
+
+<p>富贵角灯塔。</p>
+
+<p>12.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091412.jpg" /></p>
+
+<p>照相的情侣。</p>
+
+<p>13.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091413.jpg" /></p>
+
+<p>灯塔的前面是临海的悬崖，另一侧则是观海的平台。</p>
+
+<p>14.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091414.jpg" /></p>
+
+<p>悬崖下方是一片乱石滩。</p>
+
+<p>15.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091415.jpg" /></p>
+
+<p>眼前的这一片海滩，就是台湾的最北端了。</p>
+
+<p>16.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091416.jpg" /></p>
+
+<p>离开之前，再看一眼灯塔。</p>
+
+<p>17.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091417.jpg" /></p>
+
+<p>去过最北端之后，接下来是最东端"三貂角"。</p>
+
+<p>18.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091418.jpg" /></p>
+
+<p>我搭乘台铁，从台北东行，在福隆站下车。</p>
+
+<p>19.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091419.jpg" /></p>
+
+<p>福隆海水浴场，是北台湾最好的海水浴场。三貂角距离这里，大概还有七公里。</p>
+
+<p>20.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091420.jpg" /></p>
+
+<p>我在火车站前面，租了一辆自行车（租车费新台币100元），沿着专用自行车道"旧草岭隧道"，向三貂角进发了。</p>
+
+<p>21.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091421.jpg" /></p>
+
+<p>到达海岬最东点的时候，会有指示牌提示"三貂角灯塔"。</p>
+
+<p>22.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091422.jpg" /></p>
+
+<p>灯塔建在山上，山路陡峭，自行车骑不上去，步行爬山大约需要20~30分钟。</p>
+
+<p>23.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091423.jpg" /></p>
+
+<p>爬到山顶，豁然开朗。这里不仅有灯塔，还有许多西式建筑。</p>
+
+<p>24.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091424.jpg" /></p>
+
+<p>西班牙人最先发现这里，所以建筑都是仿西班牙式。</p>
+
+<p>25.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091425.jpg" /></p>
+
+<p>钟楼。</p>
+
+<p>26.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091426.jpg" /></p>
+
+<p>海誓山盟，永结同心。</p>
+
+<p>27.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091427.jpg" /></p>
+
+<p>三貂角灯塔。</p>
+
+<p>28.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091428.jpg" /></p>
+
+<p>钟楼和灯塔。</p>
+
+<p>29.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091429.jpg" /></p>
+
+<p>灯塔的前面，有一条下坡道，通往海边。</p>
+
+<p>30.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091430.jpg" /></p>
+
+<p>面对大海，有一块指示牌，告诉你这里是台湾最东端。</p>
+
+<p>31.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091431.jpg" /></p>
+
+<p>此时大雨滂沱，太平洋上水雾朦胧。</p>
+
+<p>32.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091432.jpg" /></p>
+
+<p>海里的那些礁石，就是台湾的最东端了。</p>
+
+<p>33.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091433.jpg" /></p>
+
+<p>赶在天色将暗之前，我冒雨骑回福隆，浑身湿透。</p>
+
+<p>34.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091434.jpg" /></p>
+
+<p>下一个目标，就是台湾最南端"鹅銮鼻"。</p>
+
+<p>35.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091435.jpg" /></p>
+
+<p>我在高雄火车站旁边，搭乘高雄客运的88快线。</p>
+
+<p>36.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091436.jpg" /></p>
+
+<p>在最后一站"鹅銮鼻"下车，路上大概要2个半小时。</p>
+
+<p>37.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091437.jpg" /></p>
+
+<p>车就停在"鹅銮鼻公园"的门口，但是，台湾最南端不在这个公园里面。</p>
+
+<p>38.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091438.jpg" /></p>
+
+<p>走向停车场的深处，就会看到一块"最南端"的指路牌。</p>
+
+<p>39.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091439.jpg" /></p>
+
+<p>沿着小路向深处走，大约要走上20~30分钟。</p>
+
+<p>40.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091440.jpg" /></p>
+
+<p>路的尽头，出现了一个水泥建筑物。</p>
+
+<p>41.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091441.jpg" /></p>
+
+<p>平台上挤满了大陆游客。</p>
+
+<p>42.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091442.jpg" /></p>
+
+<p>"台湾最南点"的说明牌。</p>
+
+<p>43.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091443.jpg" /></p>
+
+<p>最南端的大海。</p>
+
+<p>44.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091444.jpg" /></p>
+
+<p>近一点看大海。</p>
+
+<p>45.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091445.jpg" /></p>
+
+<p>这里的海滩都是珊瑚礁，完全不适合行走。</p>
+
+<p>46.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091446.jpg" /></p>
+
+<p>回来的路上，我还顺道去了"国立海洋生物馆"，流连忘返。</p>
+
+<p>47.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091447.jpg" /></p>
+
+<p>现在，只剩下台湾最西端"顶额沙洲"了。</p>
+
+<p>48.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091448.jpg" /></p>
+
+<p>我在台南火车站前，搭乘99路"台江线"。（顺便说一句，台南是一个非常有魅力的城市，也许是台湾最宜居的地方，我很喜欢。）</p>
+
+<p>49.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091449.jpg" /></p>
+
+<p>这条线路有一个特别之处，就是允许携带自行车。（这辆自行车破了一点，但是别人免费借给我，我也不能要求更多了。）</p>
+
+<p>50.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091450.jpg" /></p>
+
+<p>每年10月至次年2月，为了观赏候鸟，99路会一直开到海边。但是，我是7月份去台南，所以终点站是一个叫"大众庙"的地方。</p>
+
+<p>51.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091451.jpg" /></p>
+
+<p>这里距离台湾最西端大概有20多公里（也就是说，那一天我来回骑行了40多公里，这差不多是我的运动极限了）。这时，你需要一张详细的台南地图或GPS，帮助你从大众庙骑到台17线公路上。</p>
+
+<p>52.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091452.jpg" /></p>
+
+<p>我从169公里处，进入台17线，然后向北骑行。</p>
+
+<p>53.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091453.jpg" /></p>
+
+<p>大约在162公里处，有一座国姓桥，跨过曾文溪。</p>
+
+<p>54.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091454.jpg" /></p>
+
+<p>过了国姓桥以后，立刻向东转，进入173县道。然后，一路上都会看到"黑琵保护区"的指示牌，沿着它骑。</p>
+
+<p>55.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091455.jpg" /></p>
+
+<p>大约三四公里之后，就到了"黑面琵鹭保育管理及研究中心"。</p>
+
+<p>56.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091456.jpg" /></p>
+
+<p>继续往前骑，一公里之后，有一个"观鸟亭"。</p>
+
+<p>57.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091457.jpg" /></p>
+
+<p>亭子前一个很有意思的路牌。</p>
+
+<p>58.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091458.jpg" /></p>
+
+<p>观鸟亭里空无一人。黑面琵鹭每月10月至次年2月，从东北亚飞到这里过冬。在此期间，99路的终点站就在这里。</p>
+
+<p>59.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091459.jpg" /></p>
+
+<p>这里距离台湾最西端，大约还有四公里。继续往前骑，一会儿功夫，就到了七股乡的海堤。</p>
+
+<p>60.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091460.jpg" /></p>
+
+<p>远远地就听到轰鸣声，走进树林才发现，离海原来如此之近。</p>
+
+<p>61.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091461.jpg" /></p>
+
+<p>沿着海堤，由东转向北骑行。</p>
+
+<p>62.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091462.jpg" /></p>
+
+<p>不久，就会看到指示牌，上面写着"国圣灯塔 3KM"，那里就是台湾最西端。</p>
+
+<p>63.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091463.jpg" /></p>
+
+<p>这时，海边下起了倾盆大雨。我只能停车，在路边避雨。倒霉的事件发生了，我的照相机这时掉进了水里，无法继续使用了。所以，这就是我当天的最后一张照片。</p>
+
+<p>64.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091464.jpg" /></p>
+
+<p>国圣灯塔只能转贴<a href="http://twjill.pixnet.net/album/photo/176791776">别人</a>的照片了。记得那天在灯塔下面，我的心情糟透了，好不容易到了台湾的最后一极，却无法留下照片。</p>
+
+<p>65.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091465.jpg" /></p>
+
+<p>灯塔的近景。</p>
+
+<p>66.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091466.jpg" /></p>
+
+<p>灯塔前的海堤上，眺望台湾海峡，前面的岩石就是台湾最西端。海的那边就是福建。</p>
+
+<p>67.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091467.jpg" /></p>
+
+<p>走完台湾四极，我也该回家了。回想在台湾度过的这几个月，感概良多。</p>
+
+<p>68.</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012091468.jpg" /></p>
+
+<p>在海边，在山间，在喧嚣的黄昏，在静寂的清晨，你总在寻找你自己。过去的日子像朝露一样消散，而未来恰似绚丽的晚霞，依然在你的面前变幻莫测。</p>
+
+<p>（完）<br />
+</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/09/extreme_points_of_taiwan.html">http://www.ruanyifeng.com/blog/2012/09/extreme_points_of_taiwan.html</a></li>
+<li>最后修改时间：2012年10月14日 21:34</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title>XMLHttpRequest Level 2 使用指南</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/09/xmlhttprequest_level_2.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1740</id>
+
+    <published>2012-09-08T09:12:09Z</published>
+    <updated>2012-10-02T07:54:05Z</updated>
+
+    <summary>XMLHttpRequest是一个浏览器接口，使得Javascript可以进行HTTP(S)通信。...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="IT" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p><a href="http://en.wikipedia.org/wiki/XMLHttpRequest">XMLHttpRequest</a>是一个浏览器接口，使得Javascript可以进行HTTP(S)通信。</p>]]>
+        <![CDATA[<p>最早，微软在IE 5引进了这个接口。因为它太有用，其他浏览器也模仿部署了，ajax操作因此得以诞生。</p>
+
+<p>但是，这个接口一直没有标准化，每家浏览器的实现或多或少有点不同。HTML 5的概念形成后，W3C开始考虑标准化这个接口。2008年2月，就提出了<a href="http://dev.w3.org/2006/webapi/XMLHttpRequest-2/">XMLHttpRequest Level 2</a> 草案。</p>
+
+<p>这个XMLHttpRequest的新版本，提出了很多有用的新功能，将大大推动互联网革新。本文就对这个新版本进行详细介绍。</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012090801.png" /></p>
+
+<p><strong>一、老版本的XMLHttpRequest对象</strong></p>
+
+<p>在介绍新版本之前，我们先回顾一下老版本的用法。</p>
+
+<p>首先，新建一个XMLHttpRequest的实例。</p>
+
+<blockquote>
+
+<p>　　var xhr = new XMLHttpRequest();</p>
+
+</blockquote>
+
+<p>然后，向远程主机发出一个HTTP请求。</p>
+
+<blockquote>
+
+<p>　　xhr.open('GET', 'example.php');</p>
+
+<p>　　xhr.send();</p>
+
+</blockquote>
+
+<p>接着，就等待远程主机做出回应。这时需要监控XMLHttpRequest对象的状态变化，指定回调函数。</p>
+
+<blockquote>
+
+<p>　　xhr.onreadystatechange = function(){ </p>
+
+<p>　　　　if ( xhr.readyState == 4 && xhr.status == 200 ) {</p>
+
+<p>　　　　　　alert( xhr.responseText );</p>
+
+<p>　　　　} else {</p>
+
+<p>　　　　　　alert( xhr.statusText );</p>
+
+<p>　　　　}</p>
+
+<p>　　}; </p>
+
+</blockquote>
+
+<p>上面的代码包含了老版本XMLHttpRequest对象的主要属性：</p>
+
+<blockquote>
+
+<p>　　* xhr.readyState：XMLHttpRequest对象的状态，等于4表示数据已经接收完毕。</p>
+
+<p>　　* xhr.status：服务器返回的状态码，等于200表示一切正常。</p>
+
+<p>　　* xhr.responseText：服务器返回的文本数据</p>
+
+<p>　　* xhr.responseXML：服务器返回的XML格式的数据</p>
+
+<p>　　* xhr.statusText：服务器返回的状态文本。</p>
+
+</blockquote>
+
+<p><strong>二、老版本的缺点</strong></p>
+
+<p>老版本的XMLHttpRequest对象有以下几个缺点：</p>
+
+<blockquote>
+
+<p>　　* 只支持文本数据的传送，无法用来读取和上传二进制文件。</p>
+
+<p>　　* 传送和接收数据时，没有进度信息，只能提示有没有完成。</p>
+
+<p>　　* 受到<a href="http://www.w3.org/Security/wiki/Same_Origin_Policy">"同域限制"</a>（Same Origin Policy），只能向同一域名的服务器请求数据。</p>
+
+</blockquote>
+
+<p><strong>三、新版本的功能</strong></p>
+
+<p>新版本的XMLHttpRequest对象，针对老版本的缺点，做出了大幅改进。</p>
+
+<blockquote>
+
+<p>　　* 可以设置HTTP请求的时限。</p>
+
+<p>　　* 可以使用FormData对象管理表单数据。</p>
+
+<p>　　* 可以上传文件。</p>
+
+<p>　　* 可以请求不同域名下的数据（跨域请求）。</p>
+
+<p>　　* 可以获取服务器端的二进制数据。</p>
+
+<p>　　* 可以获得数据传输的进度信息。</p>
+
+</blockquote>
+
+<p>下面，我就一一介绍这些新功能。</p>
+
+<p><strong>四、HTTP请求的时限</strong></p>
+
+<p>有时，ajax操作很耗时，而且无法预知要花多少时间。如果网速很慢，用户可能要等很久。</p>
+
+<p>新版本的XMLHttpRequest对象，增加了timeout属性，可以设置HTTP请求的时限。</p>
+
+<blockquote>
+
+<p>　　xhr.timeout = 3000;</p>
+
+</blockquote>
+
+<p>上面的语句，将最长等待时间设为3000毫秒。过了这个时限，就自动停止HTTP请求。与之配套的还有一个timeout事件，用来指定回调函数。</p>
+
+<blockquote>
+
+<p>　　xhr.ontimeout = function(event){</p>
+
+<p>　　　　alert('请求超时！');</p>
+
+<p>　　}</p>
+
+</blockquote>
+
+<p>目前，Opera、Firefox和IE 10支持该属性，IE 8和IE 9的这个属性属于XDomainRequest对象，而Chrome和Safari还不支持。</p>
+
+<p><strong>五、FormData对象</strong></p>
+
+<p>ajax操作往往用来传递表单数据。为了方便表单处理，HTML 5新增了一个FormData对象，可以模拟表单。</p>
+
+<p>首先，新建一个FormData对象。</p>
+
+<blockquote>
+
+<p>　　var formData = new FormData();</p>
+
+</blockquote>
+
+<p>然后，为它添加表单项。</p>
+
+<blockquote>
+
+<p>　　formData.append('username', '张三');</p>
+
+<p>　　formData.append('id', 123456);</p>
+
+</blockquote>
+
+<p>最后，直接传送这个FormData对象。这与提交网页表单的效果，完全一样。</p>
+
+<blockquote>
+
+<p>　　xhr.send(formData);</p>
+
+</blockquote>
+
+<p>FormData对象也可以用来获取网页表单的值。</p>
+
+<blockquote>
+
+<p>　　var form = document.getElementById('myform');</p>
+
+<p>　　var formData = new FormData(form);</p>
+
+<p>　　formData.append('secret', '123456'); // 添加一个表单项</p>
+
+<p>　　xhr.open('POST', form.action);</p>
+
+<p>　　xhr.send(formData);</p>
+
+</blockquote>
+
+<p><strong>六、上传文件</strong></p>
+
+<p>新版XMLHttpRequest对象，不仅可以发送文本信息，还可以上传文件。</p>
+
+<p>假定files是一个"选择文件"的表单元素（input[type="file"]），我们将它装入FormData对象。</p>
+
+<blockquote>
+
+<p>　　var formData = new FormData();</p>
+
+<p>　　for (var i = 0; i < files.length;i++) {</p>
+
+<p>　　　　formData.append('files[]', files[i]);</p>
+
+<p>　　}</p>
+
+</blockquote>
+
+<p>然后，发送这个FormData对象。</p>
+
+<blockquote>
+
+<p>　　xhr.send(formData); </p>
+
+</blockquote>
+
+<p><strong>七、跨域资源共享（CORS）</strong></p>
+
+<p>新版本的XMLHttpRequest对象，可以向不同域名的服务器发出HTTP请求。这叫做<a href="http://en.wikipedia.org/wiki/Cross-Origin_Resource_Sharing">"跨域资源共享"</a>（Cross-origin resource sharing，简称CORS）。 </p>
+
+<p>使用"跨域资源共享"的前提，是浏览器必须支持这个功能，而且服务器端必须同意这种"跨域"。如果能够满足上面的条件，则代码的写法与不跨域的请求完全一样。</p>
+
+<blockquote>
+
+<p>　　xhr.open('GET', 'http://other.server/and/path/to/script');</p>
+
+</blockquote>
+
+<p>目前，除了IE 8和IE 9，主流浏览器都支持CORS，IE 10也将支持这个功能。服务器端的设置，请参考<a href="https://developer.mozilla.org/en-US/docs/Server-Side_Access_Control">《Server-Side Access Control》</a>。</p>
+
+<p><strong>八、接收二进制数据（方法A：改写MIMEType）</strong></p>
+
+<p>老版本的XMLHttpRequest对象，只能从服务器取回文本数据（否则它的名字就不用XML起首了），新版则可以取回二进制数据。</p>
+
+<p>这里又分成两种做法。较老的做法是改写数据的MIMEType，将服务器返回的二进制数据伪装成文本数据，并且告诉浏览器这是用户自定义的字符集。</p>
+
+<blockquote>
+
+<p>　　xhr.overrideMimeType("text/plain; charset=x-user-defined");</p>
+
+</blockquote>
+
+<p>然后，用responseText属性接收服务器返回的二进制数据。</p>
+
+<blockquote>
+
+<p>　　var binStr = xhr.responseText;</p>
+
+</blockquote>
+
+<p>由于这时，浏览器把它当做文本数据，所以还必须再一个个字节地还原成二进制数据。</p>
+
+<blockquote>
+
+<p>　　for (var i = 0, len = binStr.length; i < len; ++i) {</p>
+
+<p>　　　　var c = binStr.charCodeAt(i);</p>
+
+<p>　　　　var byte = c & 0xff; </p>
+
+<p>　　}</p>
+
+</blockquote>
+
+<p>最后一行的位运算"c & 0xff"，表示在每个字符的两个字节之中，只保留后一个字节，将前一个字节扔掉。原因是浏览器解读字符的时候，会把字符自动<a href="http://web.archive.org/web/20080821092906/http://mgran.blogspot.com/2006/08/downloading-binary-streams-with.html">解读</a>成Unicode的0xF700-0xF7ff区段。</p>
+
+<p><strong>八、接收二进制数据（方法B：responseType属性）</strong></p>
+
+<p>从服务器取回二进制数据，较新的方法是使用新增的responseType属性。如果服务器返回文本数据，这个属性的值是"TEXT"，这是默认值。较新的浏览器还支持其他值，也就是说，可以接收其他格式的数据。</p>
+
+<p>你可以把responseType设为blob，表示服务器传回的是二进制对象。</p>
+
+<blockquote>
+
+<p>　　var xhr = new XMLHttpRequest();</p>
+
+<p>　　xhr.open('GET', '/path/to/image.png');</p>
+
+<p>　　xhr.responseType = 'blob';</p>
+
+</blockquote>
+
+<p>接收数据的时候，用浏览器自带的Blob对象即可。</p>
+
+<blockquote>
+
+<p>　　var blob = new Blob([xhr.response], {type: 'image/png'});</p>
+
+</blockquote>
+
+<p>注意，是读取xhr.response，而不是xhr.responseText。</p>
+
+<p>你还可以将responseType设为arraybuffer，把二进制数据装在一个数组里。</p>
+
+<blockquote>
+
+<p>　　var xhr = new XMLHttpRequest();</p>
+
+<p>　　xhr.open('GET', '/path/to/image.png');</p>
+
+<p>　　xhr.responseType = "arraybuffer";</p>
+
+</blockquote>
+
+<p>接收数据的时候，需要遍历这个数组。</p>
+
+<blockquote>
+
+<p>　　var arrayBuffer = xhr.response;</p>
+
+<p>　　if (arrayBuffer) {</p>
+
+<p>　　　　var byteArray = new Uint8Array(arrayBuffer);</p>
+
+<p>　　　　for (var i = 0; i < byteArray.byteLength; i++) {</p>
+
+<p>　　　　　　// do something</p>
+
+<p>　　　　}<br />
+　　}</p>
+
+</blockquote>
+
+<p>更详细的讨论，请看<a href="https://developer.mozilla.org/en-US/docs/DOM/XMLHttpRequest/Sending_and_Receiving_Binary_Data">Sending and Receiving Binary Data</a>。</p>
+
+<p><strong>九、进度信息</strong></p>
+
+<p>新版本的XMLHttpRequest对象，传送数据的时候，有一个progress事件，用来返回进度信息。</p>
+
+<p>它分成上传和下载两种情况。下载的progress事件属于XMLHttpRequest对象，上传的progress事件属于XMLHttpRequest.upload对象。</p>
+
+<p>我们先定义progress事件的回调函数。</p>
+
+<blockquote>
+
+<p>　　xhr.onprogress = updateProgress;</p>
+
+<p>　　xhr.upload.onprogress = updateProgress;</p>
+
+</blockquote>
+
+<p>然后，在回调函数里面，使用这个事件的一些属性。</p>
+
+<blockquote>
+
+<p>　　function updateProgress(event) {</p>
+
+<p>　　　　if (event.lengthComputable) {</p>
+
+<p>　　　　　　var percentComplete = event.loaded / event.total;</p>
+
+<p>　　　　} </p>
+
+<p>　　}</p>
+
+</blockquote>
+
+<p>上面的代码中，event.total是需要传输的总字节，event.loaded是已经传输的字节。如果event.lengthComputable不为真，则event.total等于0。</p>
+
+<p>与progress事件相关的，还有其他五个事件，可以分别指定回调函数：</p>
+
+<blockquote>
+
+<p>　　* load事件：传输成功完成。</p>
+
+<p>　　* abort事件：传输被用户取消。</p>
+
+<p>　　* error事件：传输中出现错误。</p>
+
+<p>　　* loadstart事件：传输开始。</p>
+
+<p>　　* loadEnd事件：传输结束，但是不知道成功还是失败。</p>
+
+</blockquote>
+
+<p><strong>十、阅读材料</strong></p>
+
+<p>　　1. <a href="http://dev.opera.com/articles/view/xhr2/">Introduction to XMLHttpRequest Level 2</a>： 新功能的综合介绍。</p>
+
+<p>　　2. <a href="http://www.html5rocks.com/en/tutorials/file/xhr2/">New Tricks in XMLHttpRequest 2</a>：一些用法的介绍。</p>
+
+<p>　　3. <a href="https://developer.mozilla.org/en-US/docs/DOM/XMLHttpRequest/Using_XMLHttpRequest">Using XMLHttpRequest</a>：一些高级用法，主要针对Firefox浏览器。</p>
+
+<p>　　4. <a href="https://developer.mozilla.org/en-US/docs/HTTP_access_control">HTTP Access Control</a>：CORS综述。</p>
+
+<p>　　5. <a href="http://dev.opera.com/articles/view/dom-access-control-using-cross-origin-resource-sharing/">DOM access control using cross-origin resource sharing</a>：CORS的9种HTTP头信息</p>
+
+<p>　　6. <a href="https://developer.mozilla.org/en-US/docs/Server-Side_Access_Control">Server-Side Access Control</a>：服务器端CORS设置。</p>
+
+<p>　　7. <a href="http://enable-cors.org/">Enable CORS</a>：服务端CORS设置。</p>
+
+<p>（完）</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/09/xmlhttprequest_level_2.html">http://www.ruanyifeng.com/blog/2012/09/xmlhttprequest_level_2.html</a></li>
+<li>最后修改时间：2012年10月 2日 15:54</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title>《Linus Torvalds自传》摘录</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/09/linus_torvalds.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1739</id>
+
+    <published>2012-09-03T07:27:44Z</published>
+    <updated>2012-09-17T03:28:33Z</updated>
+
+    <summary>除了程序员，大概很少人知道Linux操作系统。...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="Books" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>除了程序员，大概很少人知道Linux操作系统。</p>]]>
+        <![CDATA[<p>它的发明者Linus Torvalds，知道的人就更少了。</p>
+
+<p>他本人也很低调，深居简出，很少出席公众场合或接受媒体采访，通常只在专业开发者的邮件列表中发言。提起他的名字，人们的第一反应往往是"哦，传说中那个22岁就发明Linux的芬兰大学生......"，其他就一片空白了。</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012090301.jpg" /></p>
+
+<p>他的自传<a href="http://en.wikipedia.org/wiki/Just_for_Fun">《Just For Fun》</a>出版于十年前（2001年），已经几乎被遗忘了。</p>
+
+<p><img src="http://image.beekka.com/blog/201209/bg2012090302.png" /></p>
+
+<p>星期六下午，我在硬盘里偶然翻到这本书（中译本），不经意地读了第一页。Linus Torvalds正在谈他的写作计划：</p>
+
+<blockquote>
+
+<p>"我们可以在第一章里对人们解释生命的意义何在。这样可以吸引住他们。一旦他们被吸引住，并且付钱买了书，剩下的章节里我们就可以胡扯了。"</p>
+
+</blockquote>
+
+<p>我觉得有点意思，接着往下面读。他继续谈生命的意义：</p>
+
+<blockquote>
+
+<p>"人类的追求分成三个阶段。第一是生存，第二是社会秩序，第三是娱乐。最明显的例子是性，它开始只是一种延续生命的手段，后来变成了一种社会行为，比如你要结婚才能得到性。再后来，它成了一种娱乐。"</p>
+
+</blockquote>
+
+<p>我心里嘀咕，这个理论有点离经叛道啊，不过看上去似乎有道理。但是，它跟Linux有什么关系呢？</p>
+
+<blockquote>
+
+<p>"技术最初也是为了生存，为了生存得更好。现在技术大体上还处于社会的层面，但正在朝娱乐的阶段发展。......（Linux的开发模式）为人们提供了依靠兴趣与热情而生活的机会。与世界上最好的程序员一起工作，是一种无与伦比的享受。"</p>
+
+</blockquote>
+
+<p>我被吸引住了，整个周末都在读它，越读越入迷。此书极其有趣，一点不枯燥，充满了各种好玩的笑料，以及对技术和软件的严肃思考。如果你是一个程序员，我高度推荐此书。</p>
+
+<p>我从没料到Linus Torvalds是一个如此幽默有趣的人，我摘录了一些他的妙语，请大家欣赏。</p>
+
+<p>===============================================================</p>
+
+<p><strong>1. 关于幼年</strong></p>
+
+<blockquote>
+
+<p>"出生后，我的摇篮是一个洗衣筐，幸好我沒留下什么记忆。"</p>
+
+</blockquote>
+
+<p><strong>2. 关于外貌</strong></p>
+
+<blockquote>
+
+<p>"我有一个祖传的大鼻子，据说眼镜可以让鼻子显得小一点，于是我就带上了，任何时候都不摘下来。"</p>
+
+</blockquote>
+
+<p><strong>3. 关于姓氏</strong></p>
+
+<blockquote>
+
+<p>"我祖父发明了自己的姓，全世界现在总共有十八个姓Torvalds的人，他们之间都有血缘关系，都得忍受我祖父带来的这种混乱。"</p>
+
+</blockquote>
+
+<p><strong>4. 关于服装</strong></p>
+
+<blockquote>
+
+<p>"我从小不太讲究穿衣，长大后，又突然要由别人来决定我的穿衣，这些人主要是某些高技术公司的销售人员，我就穿他们在会议上免费发送的T恤和夹克。"</p>
+
+</blockquote>
+
+<p><strong>5. 关于成长</strong></p>
+
+<blockquote>
+
+<p>"妈妈对她的一些朋友们说，我是个非常好养的孩子。她只要把我放在一个黑咕隆咚的储藏柜里，再配上一台电脑，偶尔朝里扔一些意大利面条，我就会感到格外高兴了。她的话不无道理。"</p>
+
+</blockquote>
+
+<p><strong>6. 关于入伍</strong></p>
+
+<blockquote>
+
+<p>"在那里手拿武器，上了一个月的操练课后，我便觉得有生之年完全有资格从此一动不动，享受平静的生活了。惟一可做的事情就是在键盘上打代码，或者手里端着一瓶啤酒。"</p>
+
+</blockquote>
+
+<p><strong>7. 关于退伍</strong></p>
+
+<blockquote>
+
+<p>"我的服役期在1990年5月7日结束。我妻子会告诉你，我连我们的结婚纪念日都记不住，但我却不大可能忘记我离开部队的日子。"</p>
+
+</blockquote>
+
+<p><strong>8. 关于芬兰人</strong></p>
+
+<blockquote>
+
+<p>"芬兰人有沉默的传统，人人都沉默寡言。他们常常站在一起，但一句话也不说。德国作家布莱希特二战时曾在赫尔辛基住过一段时间，他在描绘火车站一家咖啡馆里的顾客时曾说，那些人"会讲两种语言却沉默不语。"所以后来他一得到机会就逃出了芬兰。"</p>
+
+</blockquote>
+
+<p><strong>9. 关于诺基亚</strong></p>
+
+<blockquote>
+
+<p>"既然芬兰人不喜欢面对面地交谈，整个国家就成了移动电话最理想的市场。"</p>
+
+</blockquote>
+
+<p><strong>10. 关于打工</strong></p>
+
+<blockquote>
+
+<p>"我一贯喜欢室外运动，曾经一度当过邮差，但送的不是报纸而是垃圾邮件。"</p>
+
+</blockquote>
+
+<p><strong>11. 关于暑假</strong></p>
+
+<blockquote>
+
+<p>"那年夏天我做了两件事。第一件事是什么都没做。第二件事是读完了719页的《操作系统：设计和执行》。那本红色的简装本教科书差不多等于睡在了我的床上。"</p>
+
+</blockquote>
+
+<p><strong>12. 关于赫尔辛基大学</strong></p>
+
+<blockquote>
+
+<p>"学校为VAX微型机买了16个使用许可，但是却规定《C语言和UNIX》课程的选修人数为32名。我想学校的想法是16个学生白天使用机器，另外16个学生晚上使用。"</p>
+
+</blockquote>
+
+<p><strong>13. 关于理查德·斯托曼</strong></p>
+
+<blockquote>
+
+<p>"1991年，理查德·斯托曼到芬兰赫尔辛基理工大学演讲，我在生活中第一次见到了典型的留着长发、蓄着长胡子的黑客。这样的人在赫尔辛基不多。"</p>
+
+</blockquote>
+
+<p><strong>14. 关于Unix</strong></p>
+
+<blockquote>
+
+<p>"你在UNIX上完成的大部分任务都是通过六个基本操作完成的，它们被称作"系统呼叫"（system call）。第一个基本操作是"创建子进程"（fork），一个程序把自身完全复制出来，这样你就有了两个相同的拷贝。第二个基本操作是复制出来的程序，再用一个新项目替换自己。其他四个基本系统呼叫--打开、关闭、读和写--都是为了访问文件的。这六个系统呼叫便组成了UNIX的简单操作。然后，你只需在程序之间创造出交流渠道（pipes），就能解决复杂的问题。"</p>
+
+</blockquote>
+
+<p><strong>15. 关于编程</strong></p>
+
+<blockquote>
+
+<p>"对于任何编程的人来说，编程是世界上最有趣的事，比下棋有乐趣得多，因为你可以自己制订游戏规则。而你制定什么样的规则，也就会导出与此规则相符合的结果。"</p>
+
+</blockquote>
+
+<p><strong>16. 关于操作系统</strong></p>
+
+<blockquote>
+
+<p>"创造操作系统，就是去创造一个所有应用程序赖以运行的基础环境。从根本上来说，就是在制定规则：什么可以接受，什么可以做，什么不可以做。事实上，所有的程序都是在制定规则，只不过操作系统是在制定最根本的规则。"</p>
+
+</blockquote>
+
+<p><strong>17. 关于Linux的发明过程</strong></p>
+
+<blockquote>
+
+<p>"这花费了我大量的精力：编程――睡觉――编程――睡觉――编程――吃饭（饼干）――编程――睡觉――编程――洗澡（冲冲了事）――编程。"</p>
+
+</blockquote>
+
+<p><strong>18. 关于Linux的第一个观众</strong></p>
+
+<blockquote>
+
+<p>"我（把Linux）显示给我妹妹看，她盯着显示器看了大约五秒钟，看着上面是一串A和一串B，说了声"很好"，便没什么感觉地走开了。我意识到，这犹如你指给别人看你铺设了一条长长的柏油马路，但想向别人解释这条马路的意义是完全不可能的。"</p>
+
+</blockquote>
+
+<p><strong>19. 关于Linux的攻击者</strong></p>
+
+<blockquote>
+
+<p>"安德鲁·塔南鲍姆不断攻击我的Linux取代了他的MINIX操作系统。他只穿着件T恤就浑身冒火，能怪谁呢？"</p>
+
+</blockquote>
+
+<p><strong>20. 关于姑娘</strong></p>
+
+<blockquote>
+
+<p>"在那个时候，只要一想到姑娘，Linux系统就变得不再重要了。在某种程度上，今天也还是这样。"</p>
+
+</blockquote>
+
+<p><strong>21. 关于成功</strong></p>
+
+<blockquote>
+
+<p>"Linux所取得的许多成功，其实可以归结为我的缺点所致：1、我很懒散。2、我喜欢授权给其他人。"</p>
+
+</blockquote>
+
+<p><strong>22. 关于Linux 1.0版</strong></p>
+
+<blockquote>
+
+<p>"许多人认为，1.0版的发行是件大事，主要是那些出售Linux的软件公司，他们希望1.0版对发行有所帮助。在他们看来，1.0这个数字的心理意义要远比其本身的技术含量更为重要。我对此倒没有什么异议，因为事实就是如此，以0.96版的序号销售操作系统确实比较糟。"</p>
+
+</blockquote>
+
+<p><strong>23. 关于26岁</strong></p>
+
+<blockquote>
+
+<p>"我开始观察镜中的自己，我的发线正在一点点向上面爬升，脸上也开始密布着细纹。我已经二十六岁了，平生第一次觉得自己老了。而这已经是我在大学里度过的第七个年头，我想抓紧人生，快一点毕业。"</p>
+
+</blockquote>
+
+<p><strong>24. 关于超时工作</strong></p>
+
+<blockquote>
+
+<p>"Linux不是靠牺牲宝贵的睡眠时间换来的。事实上，如果你想听真话，那我就要说，我更喜欢睡觉。"</p>
+
+</blockquote>
+
+<p><strong>25. 关于网络口水仗</strong></p>
+
+<blockquote>
+
+<p>"它们的全部存在意义就是不遗余力地宣传什么东西，也就意味着还要贬损其他的相关物。你在那里经常看到的通常只是些"我的系统比你的系统更好"之类的废话。我们可以把它们看作是某种形式的在线手淫。"</p>
+
+</blockquote>
+
+<p><strong>26. 关于微软</strong></p>
+
+<blockquote>
+
+<p>"突然间，到处都是微软的产品了，被蝗虫入侵了似的。我并不是说蝗虫是坏蛋，我喜欢所有的动物和昆虫。"</p>
+
+</blockquote>
+
+<p><strong>27. 关于开源软件的商业化</strong></p>
+
+<blockquote>
+
+<p>"我认为它带给我们更多的机会。比如，有些技术人员担心没法养活自己的孩子，他们现在就有了选择的余地。你可以仍然一如既往地保持理想主义，或者你也可以选择成为某个新的商业类型。你让自己多了一个新的选择，并不会让你失去任何东西。在此之前，你除了保持纯洁之外显然没有任何其他的选择。"</p>
+
+</blockquote>
+
+<p><strong>28. 关于理想主义者</strong></p>
+
+<blockquote>
+
+<p>"我一贯认为理想主义人士很有趣，只是有点沉闷，甚至有些吓人。为了坚持一个非常强有力的意见，你不得不排除其他意见。那就意味着，你不得不变得不近情理。"</p>
+
+</blockquote>
+
+<p><strong>29. 关于互联网泡沫</strong></p>
+
+<blockquote>
+
+<p>"那情况也是前无古人的，你在任意一辆出租车内摇下窗户，随便向路边挺胸走过的妓女提问："主题演讲几点开始？"她都能告诉你答案。"</p>
+
+</blockquote>
+
+<p><strong>30. 关于比尔·盖茨</strong></p>
+
+<blockquote>
+
+<p>"比尔·盖茨作了一次主题演讲。威尼斯饭店那个足有7个宜家仓库大的舞厅里，挤满了站着听讲的人。"</p>
+
+</blockquote>
+
+<p><strong>31. 关于移居加州</strong></p>
+
+<blockquote>
+
+<p>"现在是十一月，我还穿着短裤，如果是在芬兰，我早就没命了。"</p>
+
+</blockquote>
+
+<p><strong>32. 关于软件专利</strong></p>
+
+<blockquote>
+
+<p>"我同时怀有两种心情――好的和坏的，但坏的成分更多。"</p>
+
+</blockquote>
+
+<p><strong>33. 关于攻击者</strong></p>
+
+<blockquote>
+
+<p>"有人声称，作为Linux领头人所产生的压力，已经使我从一个电脑迷变成了一个混蛋。他错了，实际上我一直是一个混蛋。"</p>
+
+</blockquote>
+
+<p><strong>34. 关于GPL许可证</strong></p>
+
+<blockquote>
+
+<p>"GPL为每个人都提供了机会，成绩卓著，这是人类的一个巨大的进步。可是，所有创新都应纳入GPL吗？ 这他妈的完全不可能，应由开发者自行决定是使用GPL还是使用其他保护版权的方法。令我几乎发疯的是，理查德·斯托曼认为非黑即白，别无它途，由此产生了不必要的政治划分。"</p>
+
+</blockquote>
+
+<p><strong>35. 关于成名</strong></p>
+
+<blockquote>
+
+<p>"当人们开始过分认真地对待你时，就为你设下了一个温柔的陷阱。"</p>
+
+</blockquote>
+
+<p><strong>36. 关于律师</strong></p>
+
+<blockquote>
+
+<p>"那些将人类的创造结果称之为是"财产"的人，不用说，便是律师了。"</p>
+
+</blockquote>
+
+<p><strong>37. 关于知识产权</strong></p>
+
+<blockquote>
+
+<p>"许多要求加强知识产权立法的讨论是基于这样一种观点，即给创造者和艺术家以更多的"保护"。而人们似乎不曾、或者说是从未意识到，这样一种强有力的权利导致一些人剥夺了另一些人的权利。如果你得出我认为版权实际上是有害的结论，那么你错了。恰恰相反，我热爱版权。我只是认为没必要将版权所有者的权利无限扩大。不要扩大到将消费者的权利都被剥夺殆尽。"</p>
+
+</blockquote>
+
+<p><strong>38. 关于Java语言</strong></p>
+
+<blockquote>
+
+<p>"不要试图以技术来控制用户，那是决不可能成功的，最终要对公司造成损害，而且也会阻碍人们对于该项技术的接受。Java就是一个例子，它现在已经远没有其初期那么富有吸引力了。Sun公司原本想要控制Java，但却基本上已经失去了它。Java现在依然运行得很好，然而却显然没有充分发挥其潜力。"</p>
+
+</blockquote>
+
+<p><strong>39. 关于人类不再登陆月球</strong></p>
+
+<blockquote>
+
+<p>"因为月球被证实是一个很单调的地方，基本上没有夜生活，这有点像圣何塞。于是人们并不想再回到月球上去了。"</p>
+
+</blockquote>
+
+<p><strong>40. 关于电子邮件</strong></p>
+
+<blockquote>
+
+<p>"我喜欢电子邮件的众多理由之一是，它如此方便又如此容易被忽略。你可以轻松地对某些邮件不加理睬。"</p>
+
+</blockquote>
+
+<p><strong>41. 关于生活哲学</strong></p>
+
+<blockquote>
+
+<p>"寻找乐趣，做一些有趣的事情，增加财富和提高名声。"</p>
+
+</blockquote>
+
+<p><strong>42. 关于未来</strong></p>
+
+<blockquote>
+
+<p>"当你谈及技术的未来时，真正有意义的是人们想要什么？一旦能够描绘出这一点，剩下的事情就是如何大规模地生产它，并使它足够便宜，以便人们能够在不牺牲另外也想要的东西的同时获得它。除此而外，没有任何事情真正有意义。"</p>
+
+</blockquote>
+
+<p>（完）</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/09/linus_torvalds.html">http://www.ruanyifeng.com/blog/2012/09/linus_torvalds.html</a></li>
+<li>最后修改时间：2012年9月17日 11:28</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title>读懂diff</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/08/how_to_read_diff.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1738</id>
+
+    <published>2012-08-29T11:20:07Z</published>
+    <updated>2012-10-07T12:53:52Z</updated>
+
+    <summary>diff是Unix系统的一个很重要的工具程序。...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="IT" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>diff是Unix系统的一个很重要的工具程序。</p>]]>
+        <![CDATA[<p>它用来比较两个文本文件的差异，是代码版本管理的基石之一。你在命令行下，输入：</p>
+
+<blockquote>
+
+<p>　　$ diff &lt;变动前的文件&gt;  &lt;变动后的文件&gt;</p>
+
+</blockquote>
+
+<p>diff就会告诉你，这两个文件有何差异。它的显示结果不太好懂，下面我就来说明，如何读懂diff。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082901.png" /></p>
+
+<p><strong>一、diff的三种格式</strong></p>
+
+<p>由于历史原因，diff有三种格式：</p>
+
+<blockquote>
+
+<p>　　* 正常格式（normal diff）</p>
+
+<p>　　* 上下文格式（context diff）</p>
+
+<p>　　* 合并格式（unified diff）</p>
+
+</blockquote>
+
+<p>我们依次来看。</p>
+
+<p><strong>二、示例文件</strong></p>
+
+<p>为了便于讲解，先新建两个示例文件。</p>
+
+<p>第一个文件叫做f1，内容是每行一个a，一共7行。</p>
+
+<blockquote>
+
+<p>　　a<br />
+　　a<br />
+　　a<br />
+　　a<br />
+　　a<br />
+　　a<br />
+　　a</p>
+
+</blockquote>
+
+<p>第二个文件叫做f2，修改f1而成，第4行变成b，其他不变。</p>
+
+<blockquote>
+
+<p>　　a<br />
+　　a<br />
+　　a<br />
+　　<strong>b</strong><br />
+　　a<br />
+　　a<br />
+　　a</p>
+
+</blockquote>
+
+<p><strong>三、正常格式的diff</strong></p>
+
+<p>现在对f1和f2进行比较：</p>
+
+<blockquote>
+
+<p>　　$ diff f1 f2</p>
+
+</blockquote>
+
+<p>这时，diff就会显示正常格式的结果：</p>
+
+<blockquote>
+
+<p>　　4c4<br />
+　　&lt; a<br />
+　　---<br />
+　　&gt; b</p>
+
+</blockquote>
+
+<p>第一行是一个提示，用来说明变动位置。</p>
+
+<blockquote>
+
+<p>　　4c4</p>
+
+</blockquote>
+
+<p>它分成三个部分：前面的"4"，表示f1的第4行有变化；中间的"c"表示变动的模式是内容改变（change），其他模式还有"增加"（a，代表addition）和"删除"（d，代表deletion）；后面的"4"，表示变动后变成f2的第4行。</p>
+
+<p>第二行分成两个部分。</p>
+
+<blockquote>
+
+<p>　　&lt; a</p>
+
+</blockquote>
+
+<p>前面的小于号，表示要从f1当中去除该行（也就是第4行），后面的"a"表示该行的内容。</p>
+
+<p>第三行用来分割f1和f2。</p>
+
+<blockquote>
+
+<p>　　---</p>
+
+</blockquote>
+
+<p>第四行，类似于第二行。</p>
+
+<blockquote>
+
+<p>　　&gt; b</p>
+
+</blockquote>
+
+<p>前面的大于号表示f2增加了该行，后面的"b"表示该行的内容。</p>
+
+<p>最早的<a href="http://www.ruanyifeng.com/blog/2010/03/unix_copyright_history.html">Unix</a>（即AT&T版本的Unix），使用的就是这种格式的diff。</p>
+
+<p><strong>四、上下文格式的diff</strong></p>
+
+<p>上个世纪80年代初，加州大学伯克利分校推出BSD版本的Unix时，觉得diff的显示结果太简单，最好加入上下文，便于了解发生的变动。因此，推出了上下文格式的diff。</p>
+
+<p>它的使用方法是加入c参数（代表context）。</p>
+
+<blockquote>
+
+<p>　　$ diff -c f1 f2</p>
+
+</blockquote>
+
+<p>显示结果如下：</p>
+
+<blockquote>
+
+<p>　　*** f1	2012-08-29 16:45:41.000000000 +0800<br />
+　　--- f2	2012-08-29 16:45:51.000000000 +0800<br />
+　　***************<br />
+　　*** 1,7 ****<br />
+　　  a<br />
+　　  a<br />
+　　  a<br />
+　　!a<br />
+　　  a<br />
+　　  a<br />
+　　  a<br />
+　　--- 1,7 ----<br />
+　　  a<br />
+　　  a<br />
+　　  a<br />
+　　!b<br />
+　　  a<br />
+　　  a<br />
+　　  a</p>
+
+</blockquote>
+
+<p>这个结果分成四个部分。</p>
+
+<p>第一部分的两行，显示两个文件的基本情况：文件名和时间信息。</p>
+
+<blockquote>
+
+<p>　　*** f1	2012-08-29 16:45:41.000000000 +0800<br />
+　　--- f2	2012-08-29 16:45:51.000000000 +0800</p>
+
+</blockquote>
+
+<p>"***"表示变动前的文件，"---"表示变动后的文件。</p>
+
+<p>第二部分是15个星号，将文件的基本情况与变动内容分割开。</p>
+
+<blockquote>
+
+<p>　　***************</p>
+
+</blockquote>
+
+<p>第三部分显示变动前的文件，即f1。</p>
+
+<blockquote>
+
+<p>　　*** 1,7 ****<br />
+　　  a<br />
+　　  a<br />
+　　  a<br />
+　　!a<br />
+　　  a<br />
+　　  a<br />
+　　  a</p>
+
+</blockquote>
+
+<p>这时不仅显示发生变化的第4行，还显示第4行的前面三行和后面三行，因此一共显示7行。所以，前面的"*** 1,7 ****"就表示，从第1行开始连续7行。</p>
+
+<p>另外，文件内容的每一行最前面，还有一个标记位。如果为空，表示该行无变化；如果是感叹号（!），表示该行有改动；如果是减号（-），表示该行被删除；如果是加号（+），表示该行为新增。</p>
+
+<p>第四部分显示变动后的文件，即f2。</p>
+
+<blockquote>
+
+<p>　　--- 1,7 ----<br />
+　　  a<br />
+　　  a<br />
+　　  a<br />
+　　!b<br />
+　　  a<br />
+　　  a<br />
+　　  a</p>
+
+</blockquote>
+
+<p>除了变动行（第4行）以外，也是上下文各显示三行，总共显示7行。</p>
+
+<p><strong>五、合并格式的diff</strong></p>
+
+<p>如果两个文件相似度很高，那么上下文格式的diff，将显示大量重复的内容，很浪费空间。1990年，GNU diff率先推出了"合并格式"的diff，将f1和f2的上下文合并在一起显示。</p>
+
+<p>它的使用方法是加入u参数（代表unified）。</p>
+
+<blockquote>
+
+<p>　　$ diff -u f1 f2</p>
+
+</blockquote>
+
+<p>显示结果如下：</p>
+
+<blockquote>
+
+<p>　　--- f1	2012-08-29 16:45:41.000000000 +0800<br />
+　　+++ f2	2012-08-29 16:45:51.000000000 +0800<br />
+　　@@ -1,7 +1,7 @@<br />
+　　 a<br />
+　　 a<br />
+　　 a<br />
+　　-a<br />
+　　+b<br />
+　　 a<br />
+　　 a<br />
+　　 a</p>
+
+</blockquote>
+
+<p>它的第一部分，也是文件的基本信息。</p>
+
+<blockquote>
+
+<p>　　--- f1	2012-08-29 16:45:41.000000000 +0800<br />
+　　+++ f2	2012-08-29 16:45:51.000000000 +0800</p>
+
+</blockquote>
+
+<p>"---"表示变动前的文件，"+++"表示变动后的文件。</p>
+
+<p>第二部分，变动的位置用两个@作为起首和结束。</p>
+
+<blockquote>
+
+<p>　　@@ -1,7 +1,7 @@</p>
+
+</blockquote>
+
+<p>前面的"-1,7"分成三个部分：减号表示第一个文件（即f1），"1"表示第1行，"7"表示连续7行。合在一起，就表示下面是第一个文件从第1行开始的连续7行。同样的，"+1,7"表示变动后，成为第二个文件从第1行开始的连续7行。</p>
+
+<p>第三部分是变动的具体内容。</p>
+
+<blockquote>
+
+<p>　　 a<br />
+　　 a<br />
+　　 a<br />
+　　-a<br />
+　　+b<br />
+　　 a<br />
+　　 a<br />
+　　 a</p>
+
+</blockquote>
+
+<p>除了有变动的那些行以外，也是上下文各显示3行。它将两个文件的上下文，合并显示在一起，所以叫做"合并格式"。每一行最前面的标志位，空表示无变动，减号表示第一个文件删除的行，加号表示第二个文件新增的行。</p>
+
+<p><strong>六、git格式的diff</strong></p>
+
+<p>版本管理系统git，使用的是合并格式diff的变体。</p>
+
+<blockquote>
+
+<p>　　$ git diff</p>
+
+</blockquote>
+
+<p>显示结果如下：</p>
+
+<blockquote>
+
+<p>　　diff --git a/f1 b/f1<br />
+　　index 6f8a38c..449b072 100644<br />
+　　--- a/f1<br />
+　　+++ b/f1<br />
+　　@@ -1,7 +1,7 @@<br />
+　　 a<br />
+　　 a<br />
+　　 a<br />
+　　-a<br />
+　　+b<br />
+　　 a<br />
+　　 a<br />
+　　 a</p>
+
+</blockquote>
+
+<p>第一行表示结果为git格式的diff。</p>
+
+<blockquote>
+
+<p>　　diff --git a/f1 b/f1</p>
+
+</blockquote>
+
+<p>进行比较的是，a版本的f1（即变动前）和b版本的f1（即变动后）。</p>
+
+<p>第二行表示两个版本的git哈希值（index区域的6f8a38c对象，与工作目录区域的449b072对象进行比较），最后的六位数字是对象的模式（普通文件，644权限）。</p>
+
+<blockquote>
+
+<p>　　index 6f8a38c..449b072 100644</p>
+
+</blockquote>
+
+<p>第三行表示进行比较的两个文件。</p>
+
+<blockquote>
+
+<p>　　--- a/f1<br />
+　　+++ b/f1</p>
+
+</blockquote>
+
+<p>"---"表示变动前的版本，"+++"表示变动后的版本。</p>
+
+<p>后面的行都与官方的合并格式diff相同。</p>
+
+<blockquote>
+
+<p>　　@@ -1,7 +1,7 @@<br />
+　　 a<br />
+　　 a<br />
+　　 a<br />
+　　-a<br />
+　　+b<br />
+　　 a<br />
+　　 a<br />
+　　 a</p>
+
+</blockquote>
+
+<p><strong>七、阅读材料</strong></p>
+
+<p>　　* <a href="http://en.wikipedia.org/wiki/Diff">diff - Wikipedia</a> </p>
+
+<p>　　* <a href="http://www.markusbe.com/2009/12/how-to-read-a-patch-or-diff-and-understand-its-structure-to-apply-it-manually/">How to read a patch or diff</a> </p>
+
+<p>　　* <a href="http://stackoverflow.com/questions/2529441/how-to-work-with-diff-representation-in-git">How to work with diff representation in git</a> </p>
+
+<p>（完）</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/08/how_to_read_diff.html">http://www.ruanyifeng.com/blog/2012/08/how_to_read_diff.html</a></li>
+<li>最后修改时间：2012年10月 7日 20:53</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title>搭建一个免费的，无限流量的Blog----github Pages和Jekyll入门</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/08/blogging_with_jekyll.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1737</id>
+
+    <published>2012-08-25T10:32:38Z</published>
+    <updated>2012-10-09T04:45:35Z</updated>
+
+    <summary>喜欢写Blog的人，会经历三个阶段。...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="IT" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>喜欢写Blog的人，会经历三个阶段。</p>]]>
+        <![CDATA[<blockquote>
+
+<p>　　第一阶段，刚接触Blog，觉得很新鲜，试着选择一个免费空间来写。</p>
+
+<p>　　第二阶段，发现免费空间限制太多，就自己购买域名和空间，搭建独立博客。</p>
+
+<p>　　第三阶段，觉得独立博客的管理太麻烦，最好在保留控制权的前提下，让别人来管，自己只负责写文章。</p>
+
+</blockquote>
+
+<p>大多数Blog作者，都停留在第一和第二阶段，因为第三阶段不太容易到达：你很难找到俯首听命、愿意为你管理服务器的人。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082501.jpg" /></p>
+
+<p>但是两年前，情况出现变化，一些程序员开始在<a href="https://github.com/">ｇithub</a>网站上搭建blog。他们既拥有绝对管理权，又享受github带来的便利----不管何时何地，只要向主机提交commit，就能发布新文章。更妙的是，这一切还是免费的，github提供无限流量，世界各地都有理想的访问速度。</p>
+
+<p>今天，我就来示范如何在github上搭建Blog，你可以从中掌握github的Pages功能，以及Jekyll软件的基本用法。更重要的是，你会体会到一种建立网站的全新思路。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082502.jpg" /></p>
+
+<p><strong>一、Github Pages 是什么？</strong></p>
+
+<p>如果你对编程有所了解，就一定听说过<a href="https://github.com/">github</a>。它号称程序员的Facebook，有着极高的人气，许多重要的项目都托管在上面。</p>
+
+<p>简单说，它是一个具有版本管理功能的代码仓库，每个项目都有一个主页，列出项目的源文件。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082503.jpg" /></p>
+
+<p>但是对于一个新手来说，看到一大堆源码，只会让人头晕脑涨，不知何处入手。他希望看到的是，一个简明易懂的网页，说明每一步应该怎么做。因此，github就设计了<a href="http://pages.github.com/">Pages功能</a>，允许用户自定义项目首页，用来替代默认的源码列表。<strong>所以，github Pages可以被认为是用户编写的、托管在github上的静态网页。</strong></p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082504.jpg" /></p>
+
+<p>github提供模板，允许<a href="https://help.github.com/articles/creating-pages-with-the-automatic-generator">站内生成</a>网页，但也允许用户自己编写网页，然后上传。有意思的是，这种上传并不是单纯的上传，而是会经过Jekyll程序的再处理。</p>
+
+<p><strong>二、Jekyll是什么？</strong></p>
+
+<p><strong><a href="http://jekyllrb.com/">Jekyll</a>（发音/'dʒiːk əl/，"杰克尔"）是一个静态站点生成器，它会根据网页源码生成静态文件。</strong>它提供了模板、变量、插件等功能，所以实际上可以用来编写整个网站。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082505.jpg" /></p>
+
+<p><strong>整个思路到这里就很明显了。你先在本地编写符合Jekyll规范的网站源码，然后上传到github，由github生成并托管整个网站。</strong></p>
+
+<p>这种做法的好处是：</p>
+
+<blockquote>
+
+<p>　　* 免费，无限流量。</p>
+
+<p>　　* 享受git的版本管理功能，不用担心文章遗失。</p>
+
+<p>　　* 你只要用自己喜欢的编辑器写文章就可以了，其他事情一概不用操心，都由github处理。</p>
+
+</blockquote>
+
+<p>它的缺点是：</p>
+
+<blockquote>
+
+<p>　　* 有一定技术门槛，你必须要懂一点git和网页开发。</p>
+
+<p>　　* 它生成的是静态网页，添加动态功能必须使用外部服务，比如评论功能就只能用<a href="http://disqus.com/">disqus</a>。</p>
+
+<p>　　* 它不适合大型网站，因为没有用到数据库，每运行一次都必须遍历全部的文本文件，网站越大，生成时间越长。</p>
+
+</blockquote>
+
+<p>但是，综合来看，它不失为搭建中小型Blog或项目主页的最佳选项之一。</p>
+
+<p><strong>三、一个实例</strong></p>
+
+<p>下面，我举一个实例，演示如何在github上搭建blog，你可以跟着一步步做。为了便于理解，这个blog只有最基本的功能。</p>
+
+<p>在搭建之前，你必须已经安装了<a href="http://git-scm.com/book/en/Getting-Started-Installing-Git">git</a>，并且有<a href="https://github.com/">github</a>账户。</p>
+
+<p><strong>第一步，创建项目。</strong></p>
+
+<p>在你的电脑上，建立一个目录，作为项目的主目录。我们假定，它的名称为jekyll_demo。</p>
+
+<blockquote>
+
+<p>　　$ mkdir jekyll_demo</p>
+
+</blockquote>
+
+<p>对该目录进行git初始化。</p>
+
+<blockquote>
+
+<p>　　$ cd jekyll_demo</p>
+
+<p>　　$ git init</p>
+
+</blockquote>
+
+<p>然后，创建一个没有父节点的分支gh-pages。因为github规定，只有该分支中的页面，才会生成网页文件。</p>
+
+<blockquote>
+
+<p>　　$ git checkout --orphan gh-pages</p>
+
+</blockquote>
+
+<p>以下所有动作，都在该分支下完成。</p>
+
+<p><strong>第二步，创建设置文件。</strong></p>
+
+<p>在项目根目录下，建立一个名为_config.yml的文本文件。它是jekyll的设置文件，我们在里面填入如下内容，其他设置都可以用默认选项，具体解释参见<a href="https://github.com/mojombo/jekyll/wiki/Configuration">官方网页</a>。</p>
+
+<blockquote>
+
+<p>　　baseurl:  /jekyll_demo</p>
+
+</blockquote>
+
+<p>目录结构变成：</p>
+
+<blockquote>
+
+<p>　　/jekyll_demo<br />
+　　　　|--　_config.yml</p>
+
+</blockquote>
+
+<p><strong>第三步，创建模板文件。</strong></p>
+
+<p>在项目根目录下，创建一个_layouts目录，用于存放模板文件。</p>
+
+<blockquote>
+
+<p>　　$ mkdir _layouts</p>
+
+</blockquote>
+
+<p>进入该目录，创建一个default.html文件，作为Blog的默认模板。并在该文件中填入以下内容。</p>
+
+<blockquote>
+
+<p>　　&lt;!DOCTYPE html&gt;</p>
+
+<p>　　&lt;html&gt;</p>
+
+<p>　　&lt;head&gt;</p>
+
+<p>　　　　&lt;meta http-equiv="content-type" content="text/html; charset=utf-8" /&gt;</p>
+
+<p>　　　　&lt;title&gt;{{ page.title }}&lt;/title&gt;</p>
+
+<p>　　&lt;/head&gt;</p>
+
+<p>　　&lt;body&gt;<br />
+ <br />
+　　　　{{ content }}<br />
+  <br />
+　　&lt;/body&gt;</p>
+
+<p>　　&lt;/html&gt;</p>
+
+</blockquote>
+
+<p>Jekyll使用<a href="https://github.com/shopify/liquid/wiki/liquid-for-designers">Liquid模板语言</a>，{{ page.title }}表示文章标题，{{ content }}表示文章内容，更多模板变量请参考<a href="https://github.com/mojombo/jekyll/wiki/Template-Data">官方文档</a>。</p>
+
+<p>目录结构变成：</p>
+
+<blockquote>
+
+<p>　　/jekyll_demo<br />
+　　　　|--　_config.yml<br />
+　　　　|--　_layouts<br />
+　　　　|　　　|--　default.html </p>
+
+</blockquote>
+
+<p><strong>第四步，创建文章。</strong></p>
+
+<p>回到项目根目录，创建一个_posts目录，用于存放blog文章。</p>
+
+<blockquote>
+
+<p>　　$ mkdir _posts</p>
+
+</blockquote>
+
+<p>进入该目录，创建第一篇文章。文章就是普通的文本文件，文件名假定为2012-08-25-hello-world.html。(注意，文件名必须为"年-月-日-文章标题.后缀名"的格式。如果网页代码采用html格式，后缀名为html；如果采用<a href="http://daringfireball.net/projects/markdown/">markdown</a>格式，后缀名为md。）</p>
+
+<p>在该文件中，填入以下内容：（注意，行首不能有空格）</p>
+
+<blockquote>
+
+<p>　　---<br />
+　　layout: default<br />
+　　title: 你好，世界<br />
+　　---</p>
+
+<p>　　&lt;h2&gt;{{ page.title }}&lt;/h2&gt;</p>
+
+<p>　　&lt;p&gt;我的第一篇文章&lt;/p&gt;</p>
+
+<p>　　&lt;p&gt;{{ page.date | date_to_string }}&lt;/p&gt;</p>
+
+</blockquote>
+
+<p>每篇文章的头部，必须有一个<a href="https://github.com/mojombo/jekyll/wiki/YAML-Front-Matter">yaml文件头</a>，用来设置一些元数据。它用三根短划线"---"，标记开始和结束，里面每一行设置一种元数据。"layout:default"，表示该文章的模板使用_layouts目录下的default.html文件；"title: 你好，世界"，表示该文章的标题是"你好，世界"，如果不设置这个值，默认使用嵌入文件名的标题，即"hello world"。</p>
+
+<p>在yaml文件头后面，就是文章的正式内容，里面可以使用模板变量。{{ page.title }}就是文件头中设置的"你好，世界"，{{ page.date   }}则是嵌入文件名的日期（也可以在文件头重新定义date变量），"| date_to_string"表示将page.date变量转化成人类可读的格式。</p>
+
+<p>目录结构变成：</p>
+
+<blockquote>
+
+<p>　　/jekyll_demo<br />
+　　　　|--　_config.yml<br />
+　　　　|--　_layouts<br />
+　　　　|　　　|--　default.html <br />
+　　　　|--　_posts<br />
+　　　　|　　　|--　2012-08-25-hello-world.html</p>
+
+</blockquote>
+
+<p><strong>第五步，创建首页。</strong></p>
+
+<p>有了文章以后，还需要有一个首页。</p>
+
+<p>回到根目录，创建一个index.html文件，填入以下内容。</p>
+
+<blockquote>
+
+<p>　　---<br />
+　　layout: default<br />
+　　title: 我的Blog<br />
+　　---</p>
+
+<p>　　&lt;h2&gt;{{ page.title }}&lt;/h2&gt;</p>
+
+<p>　　&lt;p&gt;最新文章&lt;/p&gt;</p>
+
+<p>　　&lt;ul&gt;</p>
+
+<p>　　　　{% for post in site.posts %}  </p>
+
+<p>　　　　　　&lt;li&gt;{{ post.date | date_to_string }} &lt;a href="{{ site.baseurl }}{{ post.url }}"&gt;{{ post.title }}&lt;/a&gt;&lt;/li&gt;</p>
+
+<p>　　　　{% endfor %}</p>
+
+<p>　　&lt;/ul&gt;</p>
+
+</blockquote>
+
+<p>它的Yaml文件头表示，首页使用default模板，标题为"我的Blog"。然后，首页使用了{% for post in site.posts %}，表示对所有帖子进行一个遍历。这里要注意的是，Liquid模板语言规定，输出内容使用两层大括号，单纯的命令使用一层大括号。至于{{site.baseurl}}就是_config.yml中设置的baseurl变量。</p>
+
+<p>目录结构变成：</p>
+
+<blockquote>
+
+<p>　　/jekyll_demo<br />
+　　　　|--　_config.yml<br />
+　　　　|--　_layouts<br />
+　　　　|　　　|--　default.html <br />
+　　　　|--　_posts<br />
+　　　　|　　　|--　2012-08-25-hello-world.html<br />
+　　　　|--　index.html</p>
+
+</blockquote>
+
+<p><strong>第六步，发布内容。</strong></p>
+
+<p>现在，这个简单的Blog就可以发布了。先把所有内容加入本地git库。</p>
+
+<blockquote>
+
+<p>　　$ git add .</p>
+
+<p>　　$ git commit -m "first post"</p>
+
+</blockquote>
+
+<p>然后，前往github的网站，在网站上创建一个名为jekyll_demo的库。接着，再将本地内容推送到github上你刚创建的库。注意，下面命令中的username，要替换成你的username。</p>
+
+<blockquote>
+
+<p>　　$ git remote add origin https://github.com/<strong>username</strong>/jekyll_demo.git</p>
+
+<p>　　$ git push origin gh-pages</p>
+
+</blockquote>
+
+<p>上传成功之后，等10分钟左右，访问<strong>http://username.github.com/jekyll_demo/</strong>就可以看到Blog已经生成了（将username换成你的用户名）。</p>
+
+<p>首页：</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082506.jpg" /></p>
+
+<p>文章页面：</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082507.jpg" /></p>
+
+<p><strong>第七步，绑定域名。</strong></p>
+
+<p>如果你不想用<strong>http://username.github.com/jekyll_demo/</strong>这个域名，可以换成自己的域名。</p>
+
+<p>具体方法是在repo的根目录下面，新建一个名为CNAME的文本文件，里面写入你要绑定的域名，比如example.com或者xxx.example.com。</p>
+
+<p>如果绑定的是顶级域名，则DNS要新建一条A记录，指向204.232.175.78。如果绑定的是二级域名，则DNS要新建一条CNAME记录，指向username.github.com（请将username换成你的用户名）。此外，别忘了将_config.yml文件中的baseurl改成根目录"/"。</p>
+
+<p>至此，最简单的Blog就算搭建完成了。进一步的完善，请参考Jekyll创始人的<a href="https://github.com/mojombo/tpw">示例库</a>，以及其他用Jekyll搭建的<a href="https://github.com/mojombo/jekyll/wiki/Sites">blog</a>。</p>
+
+<p>（完）</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/08/blogging_with_jekyll.html">http://www.ruanyifeng.com/blog/2012/08/blogging_with_jekyll.html</a></li>
+<li>最后修改时间：2012年10月 9日 12:45</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title>斑头雁守护日记（转载）</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/08/diary_of_wildlife_conservation.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1736</id>
+
+    <published>2012-08-20T17:08:33Z</published>
+    <updated>2012-09-20T02:28:14Z</updated>
+
+    <summary>前几天，我在网上看到一个环保志愿者的《斑头雁守护日记》，很受感染。...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="World" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>前几天，我在网上看到一个环保志愿者的<a href="http://lola.ycool.com/post.4619578.html">《斑头雁守护日记》</a>，很受感染。</p>]]>
+        <![CDATA[<p>征得作者<a href="http://weibo.com/u/1740205545">"lola罗拉罗拉"</a>的同意，我把日记转贴过来，希望更多的人看到。</p>
+
+<p>================================================</p>
+
+<p>先是一些背景介绍。</p>
+
+<p>【起因】</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082038.jpg" /></p>
+
+<blockquote>
+
+<p>中华环境保护基金会主办，绿色江河承办的"让我飞得更高----2012斑头雁守护行动"于4月22日地球日在海拔4600米的长江源班德湖正式启动，并将持续到6月5日环境日。</p>
+
+<p>由鸟类专家、摄影师、高原病专家、记者等各行业的专业志愿者组成的18人队伍组成斑头雁守护队，经过2小时的无人区颠簸抵达班德湖，开始为期45天的守护行动。据悉，斑头雁的全球种群数为7万只，而仅长江源每年被偷捡的鸟蛋就有近2000枚。志愿者们坚持三天做一次鸟类调查，一旦发现捡拾鸟蛋及其他危害斑头雁生存的行为，他们将立即上前制止。</p>
+
+<p>（摘自<a href="http://gongyi.sina.com.cn/greenlife/2012-05-21/101134480.html">新闻报道</a>）</p>
+
+</blockquote>
+
+<p>【斑头雁】</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082035.jpg" /></p>
+
+<p>斑头雁被誉为世界飞得最高的鸟类，它仅用八小时就能飞越海拔近9000米的喜马拉雅山脉。大部分的斑头雁在印度等海拔较低的地方过冬，春季翻越喜马拉雅山脉到青藏高原繁殖。</p>
+
+<p>【班德湖】</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082036.jpg" /><br />
+<img src="http://image.beekka.com/blog/201208/bg2012082037.jpg" /></p>
+
+<p>位于长江源沱沱河的班德湖是斑头雁在世界上最高的繁殖地之一，面积约8平方公里，海拔4600米。班德湖与其环绕的星罗棋布的小湖汇集周边的冰雪融水，再由北流入长江正源沱沱河。</p>
+
+<p>==================================================</p>
+
+<p>【日记】</p>
+
+<p><strong>2012年5月31日</strong></p>
+
+<p>前面的"营地日记"，都是<a href="http://blog.sina.com.cn/u/1723274563">麦茬</a>在记，她走后就由我记。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082001.jpg" /></p>
+
+<p>由于没有凳子，午饭时大家爱跳上新买的皮卡。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082002.jpg" /></p>
+
+<p>吃完饭，就这样坐在湖边。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082003.jpg" /></p>
+
+<p>班德湖边不仅斑头雁产蛋了，其他鸟儿也都在产蛋。孙爷说他昨晚散步时发现个细嘴短趾百灵的巢，今天带大家去看看。我们走近，就见湖边沙滩上一个精致的鸟窝，比女生的拳头略小，溜圆光滑，里面垫着羽毛和编织整齐的稻草，最令人赞叹的是窝周围还围了一圈小石头。里面两颗小小的蛋。大家连连赞叹这真是天生的建筑师的杰作。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082004.jpg" /></p>
+
+<p>回来后又和王铭、祝迅往帐篷西边走，一只细嘴短趾百灵不像平常那样见到我们就避走，等我们只离几米了才飞。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082005.jpg" /></p>
+
+<p>我们纳闷着走过那个草丛，发现里面居然还有一个巢，垫满了温暖的羽毛，漂亮极了，把我们给乐坏了。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082006.jpg" /></p>
+
+<p>拍了照赶紧撤走，回程路上又远远避开，尽量不影响母鸟继续孵蛋。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082007.jpg" /></p>
+
+<p>大家想象着六七月班德湖遍地毛茸茸小鸟的样子，觉得世界真是无限美好。</p>
+
+<p><strong>2012年6月1日</strong></p>
+
+<p>今天是儿童节，一早起来天气就出奇地好，孙爷特赦大家出门放风，佘晖他们决定去东边的电信基站看班德湖全貌，我、王铭和杨哥去湖西石头山看鸟。孙爷和陶轲、祝迅留守营地。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082008.jpg" /></p>
+
+<p>石头山上次麦茬和卢高峰去探过，是看猛禽的好地方，囿于时间有限，他们只翻了两个垭口就止步了，我们这次一早出发，料定时间有余，就小心翼翼爬上垭口旁陡峭的山头。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082009.jpg" /></p>
+
+<p>站在山顶，天地尽收眼底，除了偶尔出现的一两顶牧民帐篷，极目天边再无人迹。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082010.jpg" /></p>
+
+<p>各拉丹冬雪山在西方地平线隐隐闪耀。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082011.jpg" /></p>
+
+<p>坐在山顶避风处，三人边抬头看猛禽缓缓滑翔，边吃着简单的午饭。一只硕大的胡兀鹫蓦地从山腰窜起，飞速掠过眼前。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082012.jpg" /></p>
+
+<p>岩羊在岩壁上灵巧跳跃。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082013.jpg" /></p>
+
+<p>感谢三哥提供我的照片。</p>
+
+<p><strong>2012年6月2日</strong></p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082014.jpg" /></p>
+
+<p>中午帐内温度飙至30多，已隐隐有了夏天的样子。吃完饭，其余人都扛不住午睡去了，我和王铭去湖边看鸟。新来一只牛背鹭，通体洁白，老神在在地涉水捕鱼，一会儿一条，一会儿一条，稳、准、狠，再看看旁边可怜的普通燕鸥，俯冲十几二十回好不容易弄到条鱼，还得巴巴地孝敬女友，而且人家吃完可能连嘴都不抹就走人了。不禁摇摇头，不同鸟不同命。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082017.jpg" /></p>
+
+<p>细嘴短趾百灵一天产一枚卵，看来这位才刚开始。当时只差一脚我就踩上去了。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082015.jpg" /></p>
+
+<p>起身往东继续走去。还没走到东边的小山包呢，刚才还毒辣辣的太阳突然不知去向，风云聚合，天地瞬间黑了下来。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082016.jpg" /></p>
+
+<p>几乎是一瞬之间，雪子噼里啪啦往下砸。雪子学名叫霰，是一种介于雪和冰雹之前的降水，比雪的个头粗壮，比冰雹略小，白色不透明，被它砸着的感觉，你可以想象天上突然无数把霰弹枪往你身上打......</p>
+
+<p><strong>2012年6月3日</strong></p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082018.jpg" /></p>
+
+<p>上午8点多，湖西方向来了两个黑点，众人轮流拿起望远镜观看，这到底是羊，是马，还是人呢？哦，两条腿的，应该是人。那是男是女？干啥的？陈诚下了断言，是两个挖矿的！</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082020.jpg" /></p>
+
+<p>吃完晚饭，照例是饭后散步，大家决定走去营地西北的点点山。路上捡到一把非常好的藏刀，正舞得开心，猛然看到一颗子弹静静躺在沙地上，是步枪子弹，不知道是打什么留下的。大家顿时不出声了，默默把子弹收起来。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082019.jpg" /></p>
+
+<p>点点山看着很近，其实死远，杨哥他们看天快黑就先走了，留我、陈诚和王铭继续往前，约定七点一刻往回走。我们最终也没走到那座山，雪云从四面八方乌压压地压过来。</p>
+
+<p><strong>2012年6月4日</strong></p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082021.jpg" /></p>
+
+<p>早上起来好大的雪，一副准备下个三天三夜不停的架势，孙爷让统计了下食物，做好补给上不来，勒紧裤腰带八年抗战的准备。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082022.jpg" /></p>
+
+<p>下午却突然放晴了。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082023.jpg" /></p>
+
+<p>厚厚的积雪哗哗化成水。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082025.jpg" /></p>
+
+<p>傍晚，杨老师和才仁开着丰田爷爷过来了，按照原定计划，明天是项目结束的日子，要现场直播小斑头雁出壳。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082024.jpg" /></p>
+
+<p>他们还带来了一位特殊的客人----一只翅膀受伤的斑头雁。这是沱沱河火车站派出所的公安干警在河边捡到的，他们简单救治后就把它送到了保护站。大家把斑头雁放到湖边，它愣了下，本能地往湖里走。心中充满了一种温柔的感情，所有人静静地目送它下湖。没一会儿，这厮就只剩下一个屁股在湖面了，正欢快地把脑袋扎进湖里狂吃猛喝。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082027.jpg" /></p>
+
+<p>雪后的黄昏美丽得紧，夕阳金黄斜照着，湖水蔚蓝，群山雪白，鸟儿啾啾。脑海中只跳出四个字：田园牧歌。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082026.jpg" /></p>
+
+<p>所有人都如脱缰野马般四散在各处，完全迷醉了。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082028.jpg" /></p>
+
+<p>突然有人大喊一声，月亮！赶紧扭头，一轮圆月从东边冉冉升起。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082029.jpg" /></p>
+
+<p>在群山衬托下，新升的月亮黄艳艳的，好大的个儿，配着磁蓝的湖面，宁静无匹。一个人在湖边站了好久，世间所有的纷繁喧杂似乎一下子都不存在了。只觉个体渺小，但渺小的个体和这有着无穷力量的自然是合而为一的。</p>
+
+<p><strong>2012年6月5日</strong></p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082030.jpg" /></p>
+
+<p>七点，所有人都起来了，穿救生衣，拿浆，推船入湖。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082031.jpg" /></p>
+
+<p>船上六人，杨老师负责指挥，孙爷摄影，杨哥摄像，王铭微博直播，才仁和陈诚推船划船。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082032.jpg" /></p>
+
+<p>八点半，消息传来，小岛上没有发现小斑头雁，九点，大岛上也没发现，好消息是大岛上数到800多只斑头雁，比我们平常在岸边数时多出了300多只。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012082033.jpg" /></p>
+
+<p>吃过饭杨老师就带着陈诚、才仁赶回保护站工地了。晚上他又兴奋地给我们电话，在一群志愿者的共同努力下，央视的《东方时空》在最后一刻上了我们项目的新闻，前面都是各种国家大事，我们是今天----世界环境日当天，唯一一例环保类的！真是高兴坏了，看着镜头里熟悉的斑头雁飞翔的镜头，感动莫名。</p>
+
+<p>【附录】</p>
+
+<p>　　*　《新闻晨报》专访作者（<a href="http://newspaper.jfdaily.com/xwcb/html/2012-07/22/content_846947.htm">上</a>，<a href="http://www.abbao.cn/page/520923662061">下</a>）</p>
+
+<p>（完）</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/08/diary_of_wildlife_conservation.html">http://www.ruanyifeng.com/blog/2012/08/diary_of_wildlife_conservation.html</a></li>
+<li>最后修改时间：2012年9月20日 10:28</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title>面试时，如何向公司提问？</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/08/questions_you_need_to_ask_in_an_interview.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1735</id>
+
+    <published>2012-08-17T06:43:32Z</published>
+    <updated>2012-09-02T09:57:30Z</updated>
+
+    <summary>以前，我写过一篇《如何面试程序员》，探讨公司如何向应聘者提问。...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="Startup" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>以前，我写过一篇<a href="http://www.ruanyifeng.com/blog/2010/12/how_to_interview_a_programmer.html">《如何面试程序员》</a>，探讨公司如何向应聘者提问。</p>]]>
+        <![CDATA[<p>今天，我看到硅谷招聘经理<a href="http://voltsteve.blogspot.com/2011/12/assessing-company-questions-you-need-to.html">Steve Buckley</a>的一篇文章，正好探讨了同一件事的另一面：应聘者如何向公司提问。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012081701.jpg" /></p>
+
+<p><strong>很多人将面试看作一种单向选择，事实上，面试是一种双向选择：不仅是公司挑选你，也是你挑选公司。</strong>面试就是为双方提供互相了解的机会，公司在评估你，你也在评估公司。</p>
+
+<p>面试官也知道这一点，所以他们有心理准备，期待你提出问题，并且会做出回答。所以，面试时不要浪费向公司提问的机会。而且，你主动提问，表明你比较重视这个职位，会加深面试官对你的印象，可能会提高面试的成功率。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012081702.jpg" /></p>
+
+<p>有一些注意点，你需要知道：</p>
+
+<blockquote>
+
+<p>　　1. 面试之前，一定要做准备，多了解公司的情况。</p>
+
+<p>　　2. 你提出的问题，应该围绕"这份工作是否合适我"这个中心点，其他与应聘关系不大的问题，不宜多问。</p>
+
+<p>　　3. 提问的时候，要自然放松，不要害羞，就把它当作普通的聊天。你要表现出对公司的真诚兴趣。</p>
+
+<p>　　4. 提问要直接了当，不要绕圈子。提出问题之后，你要保持安静，让面试官多说话。</p>
+
+<p>　　5. 面试官回答的时候，你可以做笔记，或者事先询问能不能做。笔记必须简短，你的大部分时间，要用来全神贯注倾听面试官的回答，并与其有眼神的交流。</p>
+
+<p>　　6. 面试结束后一周内，最好打一个电话或发一封邮件，了解公司对你的反馈意见。即使面试失败，你不妨也问一下原因，这会有助于你以后的面试。</p>
+
+</blockquote>
+
+<p>下面是一些你可以问的典型问题。</p>
+
+<p><strong>问题一：你们为什么要招聘这个职位？</strong></p>
+
+<p>Q1: Why are you currently recruiting for this position?</p>
+
+<p>这个问题会使得面试官开始谈论当前的项目，或者谈论前一位离职人员。无论哪种情况，都会让你了解，一些与你最密切相关的公司情况。</p>
+
+<p><strong>问题二：你们的新员工多吗？</strong></p>
+
+<p>Q2: Do you have many new staffs?</p>
+
+<p>这个问题起一个过渡作用，使得谈话导向公司内部的情况。但是，它本身也能说明一些问题。如果公司成立已经超过四年，又没有新项目，但是新员工却很多，这往往说明公司文化不是很健康。</p>
+
+<p><strong>问题三：你们公司（团队）目前面临的最大挑战是什么？</strong></p>
+
+<p>Q3: What are the biggest challenges your team are facing right now?</p>
+
+<p>如果面试官开始谈论一些具体的技术问题，这很好；如果他的回答是项目时间紧迫，或者需要更多的资金，那你就要小心一点了，公司管理上面可能有问题。</p>
+
+<p><strong>问题四：什么新技术（编程语言）是你们未来希望采用的？</strong></p>
+
+<p>Q4: What technologies/languages would you like to see your team adapt to that aren't currently being utilised?</p>
+
+<p>如果你申请的是技术职位，面试官恰巧又是技术负责人，那么这个问题将会非常合适。你会对公司的技术路线有所了解和准备，一旦入职，就能更好地适应公司的需要。</p>
+
+<p><strong>问题五：在业务方面，有没有什么地方是你们不满意的，未来想要改进的？</strong></p>
+
+<p>Q5: Few companies, if any, are 100% satisfied with the way their business is operating. If you could simply flick a switch to fix it, what one thing would you change?</p>
+
+<p>很少有公司，会百分之百满意自身的现状，即使那些状况很良好的公司也是如此。这个问题可以让你对公司管理层的关注重点和担忧之处，有所了解。</p>
+
+<p><strong>问题六：我申请的这个职位，对公司的业务有何影响？</strong></p>
+
+<p>Q6: If you struggle to fill the position I have applied for, what impact would that have on the business?</p>
+
+<p>这个问题会让你了解自己在公司的角色，以及你的岗位对公司是否重要。</p>
+
+<p>（完）<br />
+</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/08/questions_you_need_to_ask_in_an_interview.html">http://www.ruanyifeng.com/blog/2012/08/questions_you_need_to_ask_in_an_interview.html</a></li>
+<li>最后修改时间：2012年9月 2日 17:57</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title>文件上传的渐进式增强</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/08/file_upload.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1734</id>
+
+    <published>2012-08-10T05:01:50Z</published>
+    <updated>2012-09-06T05:08:56Z</updated>
+
+    <summary>文件上传是最古老的互联网操作之一。...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="IT" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>文件上传是最古老的互联网操作之一。</p>]]>
+        <![CDATA[<p>20多年了，它几乎没变，还是原来的样子：操作麻烦、缺乏交互、用户体验不佳。在这个新技术日新月异的时代，显得非常落伍。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012080901.png" style="border:none;" /></p>
+
+<p>网页开发者们想了很多办法，试图提升文件上传的功能和操作体验，在各种Javascript库的基础上，开发了五花八门的<a href="http://superdit.com/2010/06/29/10-jquery-ajax-file-uploader-plugins/">插件</a>。可是，由于不同浏览器之间的差异，缺乏统一接口，这些插件要么用起来很麻烦，要么不能普遍适用。</p>
+
+<p>HTML5提供了一系列新的浏览器API，使得文件上传有可能出现革命性变化。英国程序员<a href="http://remysharp.com/">Remy Sharp</a>总结了这些<a href="http://html5doctor.com/drag-and-drop-to-server/">新的接口</a>，本文在他的文章基础上，讨论如何采用HTML5的API，对文件上传进行渐进式增强，实现以下功能：</p>
+
+<blockquote>
+
+<p>　　* iframe上传</p>
+
+<p>　　* ajax上传</p>
+
+<p>　　* 进度条</p>
+
+<p>　　* 文件预览</p>
+
+<p>　　* 拖放上传</p>
+
+</blockquote>
+
+<p>为了对这些功能有一个感性认识，你可以先看看Remy Sharp提供的<a href="http://html5demos.com/dnd-upload">范例</a>。</p>
+
+<p>虽然这些API，还没有得到广泛部署，但它们是未来的潮流。有了它们，代码就可以写得非常优雅简洁，上面五个功能都能在20行以内实现。</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012080902.png" width="600" style="border:none;" /></p>
+
+<p><strong>一、传统形式</strong></p>
+
+<p>让我们从最基本的开始。</p>
+
+<p>文件上传的传统形式，是使用表单元素file：</p>
+
+<blockquote>
+
+<p>　　&lt;form id="upload-form" action="upload.php" method="post" enctype="multipart/form-data" &gt;</p>
+
+<p>　　　　<strong>&lt;input type="file" id="upload" name="upload" /&gt; &lt;br /&gt;</strong></p>
+
+<p>　　　　&lt;input type="submit" value="Upload" /&gt;</p>
+
+<p>　　&lt;/form&gt;</p>
+
+</blockquote>
+
+<p>所有浏览器都支持上面的代码。它在IE浏览器中，显示如下：</p>
+
+<p><img src="http://image.beekka.com/blog/201208/bg2012080903.png" /></p>
+
+<p>用户先选择文件，然后点击"Upload"按钮，文件开始上传。</p>
+
+<p><strong>二、iframe上传</strong></p>
+
+<p>传统的表单上传，属于"同步上传"。也就是说，点击上传按钮后，网页"锁死"，用户只能等待上传结束，然后浏览器刷新，跳到表单的action属性指定的网址。</p>
+
+<p>有没有办法"异步上传"，在网页不重载的情况下，完成整个上传过程呢？</p>
+
+<p>在HTML5没有出现之前，只能使用iframe做到这一点。用户点击submit时，动态插入一个iframe元素（以下代码使用了jQuery函数库）。</p>
+
+<blockquote>
+
+<p>　　var form = $("#upload-form");</p>
+
+<p>　　form.on('submit',function() {</p>
+
+<p>　　　　// 此处动态插入iframe元素</p>
+
+<p>　　});</p>
+
+</blockquote>
+
+<p>插入iframe的代码如下：</p>
+
+<blockquote>
+
+<p>　　var seed = Math.floor(Math.random() * 1000);</p>
+
+<p>　　var id = "uploader-frame-" + seed;</p>
+
+<p>　　var callback = "uploader-cb-" + seed;</p>
+
+<p>　　var iframe = $('&lt;iframe id="'+id+'" name="'+id+'" style="display:none;"&gt;');</p>
+
+<p>　　var url = form.attr('action');</p>
+
+<p>　　<strong>form.attr('target', id).append(iframe).attr('action', url + '?iframe=' + callback);</strong></p>
+
+</blockquote>
+
+<p>最后一行，有两个地方值得注意。首先，它为表单添加target属性，指向动态插入的iframe窗口，这使得上传结束后，服务器将结果返回iframe窗口，所以当前页面就不会跳转了。其次，它在action属性指定的上传网址的后面，添加了一个参数，使得服务器知道回调函数的名称。这样就能将服务器返回的信息，从iframe窗口传到上层页面。</p>
+
+<p>服务器（upload.php）返回的信息，应该是如下形式：</p>
+
+<blockquote>
+
+<p>　　&lt;script type="text/javascript"&gt;</p>
+
+<p>　　　　window.top.window['callback'](data);</p>
+
+<p>　　&lt;/script&gt;</p>
+
+</blockquote>
+
+<p>然后，在当前网页定义回调函数：</p>
+
+<blockquote>
+
+<p>　　window[callback] = function(data){</p>
+
+<p>　　　　console.log('received callback:', data);</p>
+
+<p>　　　　iframe.remove(); //removing iframe</p>
+
+<p>　　　　form.removeAttr('target');</p>
+
+<p>　　　　form.attr('action', url);</p>
+
+<p>　　　　window[callback] = undefined; //removing callback</p>
+
+<p>　　};</p>
+
+</blockquote>
+
+<p><strong>三、ajax上传</strong></p>
+
+<p>HTML5提出了XMLHttpRequest对象的<a href="http://www.w3.org/TR/XMLHttpRequest/">第二版</a>，从此ajax能够上传文件了。这是真正的"异步上传"，是将来的主流。上一节的iframe上传，可以用作老式浏览器的替代方案。</p>
+
+<p>ajax上传代码，放在表单的submit事件回调函数中：</p>
+
+<blockquote>
+
+<p>　　form.on('submit',function() {</p>
+
+<p>　　　　// 此处进行ajax上传</p>
+
+<p>　　});</p>
+
+</blockquote>
+
+<p>我们主要用的是<a href="https://developer.mozilla.org/en-US/docs/DOM/XMLHttpRequest/FormData">FormData对象</a>，它能够构建类似表单的键值对。</p>
+
+<blockquote>
+
+<p>　　// 检查是否支持FormData<br />
+　　if(window.FormData) {　</p>
+
+<p>　　　　var formData = new FormData();</p>
+
+<p>　　　　// 建立一个upload表单项，值为上传的文件<br />
+　　　　formData.append('upload', document.getElementById('upload').files[0]);</p>
+
+<p>　　　　var xhr = new XMLHttpRequest();</p>
+
+<p>　　　　xhr.open('POST', $(this).attr('action'));</p>
+
+<p>　　　　// 定义上传完成后的回调函数<br />
+　　　　xhr.onload = function () {</p>
+
+<p>　　　　　　if (xhr.status === 200) {</p>
+
+<p>　　　　　　　　console.log('上传成功');</p>
+
+<p>　　　　　　} else {</p>
+
+<p>　　　　　　　　console.log('出错了');</p>
+
+<p>　　　　　　}</p>
+
+<p>　　　　};</p>
+
+<p>　　　　xhr.send(formData);</p>
+
+<p>　　}</p>
+
+</blockquote>
+
+<p><strong>四、进度条</strong></p>
+
+<p>XMLHttpRequest第二版还定义了一个<a href="https://developer.mozilla.org/en-US/docs/DOM/XMLHttpRequest/Using_XMLHttpRequest#Monitoring_progress">progress事件</a>，可以用来制作进度条。</p>
+
+<p>首先，在页面中放置一个HTML元素progress。</p>
+
+<blockquote>
+
+<p>　　&lt;progress id="uploadprogress" min="0" max="100" value="0"&gt;0&lt;/progress&gt;</p>
+
+</blockquote>
+
+<p>然后，定义progress事件的回调函数。</p>
+
+<blockquote>
+
+<p>　　xhr.upload.onprogress = function (event) {</p>
+
+<p>　　　　if (event.lengthComputable) {</p>
+
+<p>　　　　　　var complete = (event.loaded / event.total * 100 | 0);</p>
+
+<p>　　　　　　var progress = document.getElementById('uploadprogress');</p>
+
+<p>　　　　　　progress.value = progress.innerHTML = complete;</p>
+
+<p>　　　　}</p>
+
+<p>　　};</p>
+
+</blockquote>
+
+<p>注意，progress事件不是定义在xhr，而是定义在xhr.upload，因为这里需要区分下载和上传，下载也有一个progress事件。</p>
+
+<p><strong>五、图片预览</strong></p>
+
+<p>如果上传的是图片文件，利用<a href="http://dev.w3.org/2006/webapi/FileAPI/">File API</a>，我们可以做一个图片文件的预览。这里主要用到<a href="http://www.w3.org/TR/FileAPI/#FileReader-interface">FileReader对象</a>。</p>
+
+<blockquote>
+
+<p>　　// 检查是否支持FileReader对象<br />
+　　if (typeof FileReader != 'undefined') {</p>
+
+<p>　　　　var acceptedTypes = {<br />
+　　　　　　'image/png': true,<br />
+　　　　　　'image/jpeg': true,<br />
+　　　　　　'image/gif': true<br />
+　　　　};</p>
+
+<p>　　　　if (acceptedTypes[document.getElementById('upload').files[0].type] === true) {</p>
+
+<p>　　　　　　var reader = new FileReader();</p>
+
+<p>　　　　　　reader.onload = function (event) {</p>
+
+<p>　　　　　　　　var image = new Image();</p>
+
+<p>　　　　　　　　image.src = event.target.result;</p>
+
+<p>　　　　　　　　image.width = 100; </p>
+
+<p>　　　　　　　　document.body.appendChild(image);</p>
+
+<p>　　　　　　};</p>
+
+<p>　　　　reader.readAsDataURL(document.getElementById('upload').files[0]);</p>
+
+<p>　　　　}</p>
+
+<p>　　}</p>
+
+</blockquote>
+
+<p><strong>六、拖放上传</strong></p>
+
+<p>最后，利用HTML5的<a href="http://www.w3.org/TR/html5/dnd.html">拖放功能</a>，实现拖放上传。</p>
+
+<p>先在页面中放置一个容器，用来接收拖放的文件。</p>
+
+<blockquote>
+
+<p>　　&lt;div id="holder"&gt;&lt;/div&gt;</p>
+
+</blockquote>
+
+<p>对它设置样式：</p>
+
+<blockquote>
+
+<p>　　#holder {<br />
+　　　　border: 10px dashed #ccc;<br />
+　　　　width: 300px;<br />
+　　　　min-height: 300px;<br />
+　　　　margin: 20px auto;<br />
+　　}</p>
+
+<p>　　#holder.hover {<br />
+　　　　border: 10px dashed #0c0;<br />
+　　}</p>
+
+</blockquote>
+
+<p>拖放文件的代码，主要是定义dragover、dragend和drop这三个事件。</p>
+
+<blockquote>
+
+<p>　　// 检查浏览器是否支持拖放上传。<br />
+　　if('draggable' in document.createElement('span')){ </p>
+
+<p>　　　　var holder = document.getElementById('holder');</p>
+
+<p>　　　　holder.ondragover = function () { this.className = 'hover'; return false; };</p>
+
+<p>　　　　holder.ondragend = function () { this.className = ''; return false; };</p>
+
+<p>　　　　holder.ondrop = function (event) {</p>
+
+<p>　　　　　　event.preventDefault();</p>
+
+<p>　　　　　　this.className = '';</p>
+
+<p>　　　　　　var files = event.dataTransfer.files;</p>
+
+<p>　　　　　　// do something with files</p>
+
+<p>　　　　};</p>
+
+<p>　　}</p>
+
+</blockquote>
+
+<p>完成后的效果和总体代码，请看拖放上传<a href="http://html5demos.com/dnd-upload">demo</a>。</p>
+
+<p>（完）</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/08/file_upload.html">http://www.ruanyifeng.com/blog/2012/08/file_upload.html</a></li>
+<li>最后修改时间：2012年9月 6日 13:08</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title>小额支付试验的结果</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/07/micropayment_result.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1733</id>
+
+    <published>2012-07-31T02:47:12Z</published>
+    <updated>2012-10-26T08:44:03Z</updated>
+
+    <summary>去年5月，Google关闭了我的Adsense广告账户。...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="My_Website" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>去年5月，Google<a href="http://www.ruanyifeng.com/blog/2011/05/my_google_adsense_is_disabled.html">关闭</a>了我的Adsense广告账户。</p>]]>
+        <![CDATA[<p>我在网上宣布，由于没有了广告收入，我决定卖文。还承诺一年之后，公布收到多少钱。</p>
+
+<p>现在一年过去了，今天我就公布结果。</p>
+
+<p>需要道歉的是，晚了两个月。5月底的时候，有一家报纸对这个题材有兴趣。我就想先发表在报纸，再公布在网志。谁知报社最后还是没发表，整件事就这样拖下来了。</p>
+
+<p>下面的文章，就是我给报纸的稿子。根据要求，字数1500字，内容针对非专业读者，没有进行微支付的深入讨论。</p>
+
+<p>==============================================================</p>
+
+<p><strong>网络卖文记</strong></p>
+
+<p>作者：阮一峰</p>
+
+<p><img src="http://image.beekka.com/blog/201207/bg2012073001.jpg" /></p>
+
+<p>把自己的作品放上互联网，能收到钱吗？下面就是我的亲身经历。</p>
+
+<p>事情的起因是，我有一个博客网站。为了弥补网站的支出，我参加了Google公司的网络广告计划。只要访问者点击广告，我就会收到广告费。</p>
+
+<p>可是一年前，Google送来一封邮件，宣布由于某种原因，我的广告账户将被关闭。也就是说，我不会再收到广告费了。虽然这笔钱并不多，但是毕竟少了一笔收入，我感到很不情愿。</p>
+
+<p>思前想后，我决定正好借这个机会，做一个试验：在网上出售自己的文章，看看多少人愿意付费。</p>
+
+<p>2011年5月16日，我在每篇博客的底下，加上了一个按钮，上面写着四个字"付费支持"。用户点击这个按钮，就会看到这样一段话：</p>
+
+<blockquote>
+
+<p>"如果你读了我的文章，觉得有帮助，欢迎向我支付一小笔金钱作为回报。</p>
+
+<p>每篇文章的价格是0.99元人民币，或者0.99元美元。读完文章以后，如果你觉得它值这个价，欢迎付费。谢谢。</p>
+
+<p>这不仅是我解决网站收入问题的一种手段，也是一个实验。一年之后，我会公布一共收到多少钱。如果微支付这条路能够走得通，就会鼓励更多的人在网络上提供高质量的内容，逐步改变中文网络的生态环境。"</p>
+
+</blockquote>
+
+<p>猜猜结果怎么样？头一个月，每天都有人付费！</p>
+
+<p>可惜好景不长，正当我欢欣鼓舞，预料之外的状况纷纷出现，种种外部限制让这个试验困难重重。对于付款阅读，我有了新的认识。</p>
+
+<p><strong>（1）中介机构收费偏高。</strong></p>
+
+<p>我的收款工具，是国内最大的网络支付平台"支付宝"。它每月前20笔交易免费，此后每笔交易收取1%的手续费，最低不少于1元，最高不超过25元。</p>
+
+<p>我很快发现，如果每篇文章的定价是0.99元，还不足以弥补手续费。我不仅一分钱都收不到，而且还要自掏腰包，每笔交易另行向"支付宝"支付0.01元。出于无奈，我不得不把付款金额提高到9.9元，相当于一次性购买10篇文章。</p>
+
+<p>要求读者一次性付费9.9元，无疑是偏高的，大多数报纸的定价也不过1元。可是，所有的第三方支付网站都有最低收费门槛，使得"微支付"几乎不可能实现。</p>
+
+<p><strong>（2）操作麻烦。</strong></p>
+
+<p>就算访问者愿意接受我的价格，他很快就会发现，支付过程非常麻烦。首先，必须输入用户名和密码，登录支付宝，然后才能付款。如果他的账户是空的，或者他根本就没有支付宝账户，事情就会变得复杂。他必须输入银行卡信息，直接从银行账户向我划款，这又涉及到银行网站的登录和验证。</p>
+
+<p>基本上，访问者至少需要3--5分钟完成支付过程。考虑到他所要购买的只是一篇文章而已，我觉得实在没有理由让别人浪费这么多时间。很多愿意付款的人，也确实因为这个理由而懒得付款。</p>
+
+<p><strong>（3）用户体验糟糕。</strong></p>
+
+<p>真正致命的是这一点。交易应该是等价交换，可是由于我采用"先阅读，再付费"的方式，导致整个过程实际上类似捐赠。访问者并没有因为付费，而得到新的体验，付款之后，他的满意度并无变化，事实上由于付款平台的限制，我甚至无法向他显示一句"谢谢你"。</p>
+
+<p>如果对一方来说，交易是否进行并无差别，只取决于你是否愿意对另一方做一些善意的补偿，那么我觉得这肯定长久不了。</p>
+
+<p>因为上面这三点不利条件，付费阅读的人逐渐稀少。我慢慢开始接受一个事实：我的文章很难卖出去。</p>
+
+<p>但是，我前面说过，一年之后，我会公布这个试验的结果，披露一共收到了多少钱。现在就是揭晓结果的时刻了。</p>
+
+<p><strong>从去年5月到今年5月，我一共写了88篇博客，共计收到1079笔付款，其中美元255.97元，人民币4106.04元。</strong></p>
+
+<p>这个数字算多吗？我的每篇博客，读者人数平均接近2万人。根据上面的统计，可以推算出，其中大概有12个人愿意向我付款。"转化率"（访问者转化为消费者的比率）不到0.1%，而电子商务网站的正常转化率大概是2%到5%。呜呼，付费阅读的艰难可见一斑。</p>
+
+<p>我想，如此之低的转化率，说明目前阶段付费阅读还不可行。但是，另一方面，我们也必须看到，即使有各种不利条件，还是有人愿意付款。如果交易费用更低、支付过程更便利、付费后能得到实际利益，我觉得付费阅读是可行的。当然，前提是你的内容必须对读者有用。</p>
+
+<p>（完）</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/07/micropayment_result.html">http://www.ruanyifeng.com/blog/2012/07/micropayment_result.html</a></li>
+<li>最后修改时间：2012年10月26日 16:44</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+<entry>
+    <title>蒋经国与台湾民主进程</title>
+    <link rel="alternate" type="text/html" href="http://www.ruanyifeng.com/blog/2012/07/chiang_ching-kuo.html" />
+    <id>tag:www.ruanyifeng.com,2012:/blog//1.1732</id>
+
+    <published>2012-07-25T04:23:05Z</published>
+    <updated>2012-08-30T05:27:29Z</updated>
+
+    <summary>英国《经济学家》杂志，每年公布一次&quot;民主指数&quot;（Democracy Index），用来评估世界各国和地区的民主程度。...</summary>
+    <author>
+        <name>阮一峰</name>
+        <uri>http://www.ruanyifeng.com</uri>
+    </author>
+    
+        <category term="History" scheme="http://www.sixapart.com/ns/types#category" />
+    
+    
+    <content type="html" xml:lang="en" xml:base="http://www.ruanyifeng.com/blog/">
+        <![CDATA[<p>英国《经济学家》杂志，每年公布一次<a href="http://zh.wikipedia.org/wiki/%E6%B0%91%E4%B8%BB%E6%8C%87%E6%95%B0">"民主指数"</a>（Democracy Index），用来评估世界各国和地区的民主程度。</p>]]>
+        <![CDATA[<p>在<a href="http://en.wikipedia.org/wiki/Democracy_Index#2011_rankings">2011年的评选</a>中，台湾排在第37位，是排名最高的华人地区。（香港排名第80位，新加坡第81位，还有的地区倒数。）</p>
+
+<p><img src="http://image.beekka.com/blog/201207/bg2012072502.jpg" /></p>
+
+<p>为什么台湾可以推行民主制度，其他华人地区却做不到？二战结束后，台湾还是一个高度集权的社会，蒋介石实行独裁统治，为什么半个世纪之后一切完全改变？如果台湾可以在和平条件下，实现民主转变，其他地区行不行？</p>
+
+<p>最近，我读完了美国人陶涵的<a href="http://www.infzm.com/content/27527">《蒋经国传》</a>，了解了台湾民主制度的由来，对上面这些问题有了新的认识。这本《蒋经国传》是同类书籍中最好的一本，资料详实，信息量大，叙述清晰，立场客观，推荐阅读。（以下的引文都出自该书。）</p>
+
+<p><img src="http://image.beekka.com/blog/201207/bg2012072501.jpg" /></p>
+
+<p>《蒋经国传》（英文版：哈佛大学出版社，2000；繁体中文版：时报出版公司，2001；简体中文版：新华出版社，2002，天津华文天下图书有限公司，2010。）</p>
+
+<p><strong>一、民主的起步</strong></p>
+
+<p>1986年3月，蒋经国在国民党十二届三中全会上，提出"政治革新"的主张，决定开放党禁报禁，允许自由成立政党、自由出版报纸。</p>
+
+<p>一般把这个事件，当做台湾民主制度的开端。但是实际上，它的根源可以追溯到很久以前。</p>
+
+<p>1950年，国民党退守台湾不久，就举行了第一次地方选举，95%的选民参加了投票。结果，在举行选举的四个县市之中，国民党只赢了基隆和澎湖，党外人士赢得了台南和台中的市长。1954年，最重要的台北市长选举，国民党候选人"警务处长"王民宁，居然被无党派人士高玉树击败。</p>
+
+<p>由此可知，早在50年代初，台湾就有全民投票的选举。虽然，选出来的县市长没有实权，只是行政官僚，财政、立法、政策、组织、人事全掌握在国民党手中，但是至少有形式上的民主选举。</p>
+
+<p>蒋介石为什么允许举行县市长普选？主要有三个原因：</p>
+
+<blockquote>
+
+<p>　　（1）1947年通过的《中华民国宪法》，规定人民有选举，罢免，创制，复决权，因此有必要落实宪法权利。</p>
+
+<p>　　（2）国民党在大陆被共产党击败，退守台湾后痛定思痛，决定推行一定程度的政治改革。</p>
+
+<p>　　（3）国民党想要守住台湾，离不开美国支持。举行选举，有助于获得美国的好感和援助。</p>
+
+</blockquote>
+
+<p><strong>二、蒋经国的贡献</strong></p>
+
+<p>如果台湾的选举早已有之，那么蒋经国的历史作用体现在哪里呢？</p>
+
+<p>可以这样说，蒋经国将台湾民主从"形式"推进到了"实质"，完成了关键的转变。他认识到，台湾处境困难，如果要想实现繁荣稳定，要想国民党真正获得台湾人的支持，必须扩大统治基础，让大多数人民参与政治决策。而实现这一目标的唯一途径，就是建立真正的民主制度。</p>
+
+<p>在经济上，蒋经国推行"土地改革"，让佃农获得土地，让中下阶层上升为中产阶级，防止贫富分化，以收入增长获取大多数人的支持。</p>
+
+<p>在政治上，蒋经国逐步扩大民众的自由，允许反对派的存在和发展，将政治权力逐渐从外省人向本省人让渡。</p>
+
+<blockquote>
+
+<p>"蒋经国把高级将领召集到日月潭开会。有一天晚餐后，他散步回来，有一群将领在阳台纳凉聊到把本省人晋升到高阶，在安全上有何风险。他驻足听了一会儿，打断众人谈话，他说：'各位，这是一个严肃的题目。如果我们不把本省人当做中国人看待，我们的麻烦就大了'。 蒋经国不久就让500名将军、2000名校官（全是外省人）退役，同时本省人进军校就读的人数亦稳定增加，第一个本省人亦授阶为将官。"</p>
+
+</blockquote>
+
+<p><strong>三、雷震和彭明敏</strong></p>
+
+<p>蒋经国的思想转变是逐步发生的。</p>
+
+<p>50年代后期，有一个外省人雷震主持出版《自由中国》半月刊，鼓吹军队国家化、开放地方自治、反对蒋介石连任总统，还组建了"中国民主党"。蒋经国毫不犹豫地批准逮捕雷震，判处10年有期徒刑。</p>
+
+<p>1964年，本省知识分子彭明敏反对国民党，鼓吹台独。他被逮捕后，蒋经国同意只判决有期徒刑8年，坐牢7个月后签署"悔过书"，特赦出狱。</p>
+
+<blockquote>
+
+<p>"彭明敏获释后就失业，赋闲在家。1966年初，意外地出现一位官员到访，表示蒋经国想'听听他的建言'。彭明敏踏进办公室时，蒋经国起身迎接这位前政治犯，问候他的家人，也问起有什么事需要他帮忙。鉴于蒋经国态度亲切，彭明敏表示希望能回到大学教书。蒋经国暗示他会试试看。不久，彭明敏被邀请到蒋经国的"智库"国际关系研究所担任研究员，彭谢绝了。其后几年，彭明敏继续遭到跟监，不过他偶尔仍与想法相近的知识分子来往。同时蒋经国不时派出情报人员向彭明敏表示，国民党内的自由派依然希望能说服他参与体制内的改革运动。"</p>
+
+</blockquote>
+
+<p>由此可知，蒋经国对待反对派的态度是逐步趋向宽容的。</p>
+
+<p><strong>四、民主选举的发展</strong></p>
+
+<p>蒋经国对待民主选举的策略是，"举办干净选举、公正计票，以吸引有声望的党外人士参选，然后依靠严格的竞选限制（包括什么能说、什么不能说）以及国民党巨大的财力优势及掌控媒体，来争取多数席次的胜选。"</p>
+
+<blockquote>
+
+<p>（1969年的立法委员选举，）"蒋经国允许各候选人史无前例地抨击政府，国民党第一次受到倾向党外的媒体的公开批评。党外候选人郭国基和黄信介，抗议本省人受到歧视，当局把极大数额岁入拨给军方等等。他们甚至要求直接民选台湾省长，结束戒严。黄信介更大胆表示，反攻大陆已经无望，如果蒋总统继续长久占着位置，对国家不利。郭国基和黄信介都当选立法委员，这代表立法院里首次出现两位真正的反对党人士。"</p>
+
+<p>当年的县市选举，省议会71席议员，国民党赢得61席；15个县长席次，国民党候选人当选了14席。可是台北、高雄和台中的市长都被党外人士占据。党外势力普遍受到受过良好教育的台湾人的支持。</p>
+
+</blockquote>
+
+<p>三年后的1972年立法委员选举，100多名党外人士在台北集会，呼吁修改选举法。这是党外人士1960年以来首度正式集会。蒋经国不断接到报告，详述党外候选人挑拨性质的言行，并建议他法办几个人，包括把发言激烈的康宁祥抓起来。幕僚还说，康宁祥是"匪谍"，蒋经国不理会这些报告，反而问部属，为什么国民党籍立法委员问不出这样的问题？后来，他邀请康宁祥喝茶，两人讨论起立法议程上的一些议题。</p>
+
+<p>1976年11月，举办中央及地方五项公职人员选举。投票日之前，幕僚向蒋经国报告，国民党有可能丢掉几个重要席位。蒋经国表示，党应该好好运用自己的优势，但不该允许有作弊行为。他说："我们只要掌握51%就可以"。 这次五项公职人员竞选，总共有个1318席次，国民党只赢了76%，丢掉好几个县市长宝座。</p>
+
+<p><strong>五、新闻自由</strong></p>
+
+<p>民主制度有两大基石，除了一人一票的选举，就是新闻自由。蒋经国在推行民主选举的同时，逐步扩大新闻自由。</p>
+
+<blockquote>
+
+<p>1975年，蒋介石去世后，蒋经国把核准新刊物登记、发行的权力，由警备总部移交到"行政院新闻局"。不过，国民党的文工会和警备总部仍然保有取缔、关闭刊物的权力。</p>
+
+<p>党外人士康宁祥、黄信介申请发行《台湾政论》，获得批准。该杂志大肆进行政治批判，不仅抨击国民党，呼吁全面改选"中央民意代表"，还公开要求本省人、外省人之间的权力分配要更平均。甚至发表文章，主张台湾人民若不是推翻国民党独裁政权，就只有早早跟祖国统一这条路可走。蒋经国同意警备总部的看法，认为这是"煽动叛乱"，勒令停刊。</p>
+
+</blockquote>
+
+<p>后来，康宁祥申请发行新刊物《八十年代》，黄信介申请发行《美丽岛》，都获得批准。这两本杂志都以政治评论为主，《美丽岛》的言论尤其激进，采取对抗性、法律边缘策略。很长时间内，它们都被允许出版，没有被关闭。</p>
+
+<p><strong>六、反对党的成立</strong></p>
+
+<p>集权政府向民主政府过渡，重要标志和关键就是出现一个有力的反对党。这往往是最困难的部分，因为很难想象，当权派同意将权力和利益，拱手让给反对派。蒋经国在这方面，表现出了真正的伟大之处。</p>
+
+<p>1979年，蒋经国接到报告，称党外人士准备未经许可举行大型集会。蒋经国的指示是：只要守秩序，照规矩来，警方不应干预。他放出讯息，他"个人在推动对话政策"。当年12月10日，国民党举行十一届四中全会，蒋经国发表关于台湾民主的重要演讲。他说，实行民主宪政是国家政治建设应走的大道，必须继续向前迈进，决不容许后退。</p>
+
+<p>1981年，蒋经国请人传话给美国驻台代表李洁明（James R. Lilley），提到他的四点计划。第一点是民主化，包括全面选举。第二点是台湾化，外省人掌权的日子行将结束，本省人必将全面逐步出任要职。第三点是"完成前两点的关键"，也就是大幅提升国民所得和生活水准，这个目标则需要有更多的基础建设，更重视科技与出口。第四点，就是与中华人民共和国发展工作关系。</p>
+
+<p>1984年5月，台湾的反对派人士成立"党外公政会"，提出成立正式反对党的目标。内政部命令"党外公政会"解散，反对派拒绝从命。国民党则持续研商，没有结论，使得"党外公政会"看上去似乎多少有点合法性。</p>
+
+<blockquote>
+
+<p>1986年9月28日，135个反对派在台北市圆山大饭店集会，提议即日起建立新党，取名为民主进步党。幕僚得到消息，"跑进蒋经国卧室向他报告，他点点头，没有回应，过了半小时才交代副官通知几位核心高级官员到官邸开会。党政军要员迅速赶到接待室。蒋经国坐在轮椅上出现，开口就说：'时代在变，环境在变，潮流也在变'。接下来又讲了几分鐘这类有哲学意味的话。他说，国民党过去'太骄傲、太自负'，现在起，不能再跟从前一样。 虽然警备总部已准备一份抓人名单，蒋经国却说：'抓人解决不了问题......政府应该避免冲突，保持镇定'。 他指示行政院新闻局起草一份公开声明说，组织新政党的问题已在研究中，尚待做出决定，目前的政策不变：亦即没有所谓合法的反对党。因此，政府在此时并不承认民进党。他又说，国民党中常会应加快研究政治革新，公佈一个时间表，让民众瞭解党的改革方向。"</p>
+
+<p>"次日，国民党中常会正式集会讨论此一问题，蒋经国重申他的论点。然后就没有再进一步讨论了。在适当程序完成前，当局不会承认民进党；但是对于民进党人士，当局也不会采取法律行动。"</p>
+
+</blockquote>
+
+<blockquote>
+
+<p>1986年10月15日，国民党中常会通过了制订新的《国家安全法》以取代《戒严法》、修订《民间团体法》和《选罢法》以允许组成新政党的议案。当专案小组开始起草《国家安全法》条文时，高级情报首长建议可以让当局保存对言论自由随时管束的大权的文字时，蒋经国不同意。他说："那不是新瓶装旧酒，换汤不换药吗！"</p>
+
+</blockquote>
+
+<blockquote>
+
+<p>1986年12月的立法委员选举，民进党候选人毫无顾忌地发表各式反对言论，举起了"反对蒋家"、"反对一切暴政"的旗帜。有些漫画把蒋经国丑化为对美国人卑躬屈膝，还有些更大胆把他画成猪头猪脑。"抗议者并不仅限于言词抨击，他们焚烧国旗、国民党党旗，还有人向国民党中央党部庭院拋进一枚炸弹。此时，戒严在法律上还没有取消，警备总部再度促请蒋经国批准他们逮捕若干位民进党领袖。蒋经国依然不肯同意。他还释放13名政治犯，使得牢里的反对派人士只剩110人。"</p>
+
+<p>选举结果公布，国民党得票率70%，"立法院"73席的改选席次，国民党佔了59位。民进党建党才3个月，在各项不同职务的竞选提名44人，当选23人，已经是一股不可漠视的反对力量。</p>
+
+</blockquote>
+
+<p><strong>七、逝世</strong></p>
+
+<p>1987年12月25日，蒋经国已经病入膏肓，距离逝世只有三个星期。</p>
+
+<blockquote>
+
+<p>他依然坐轮椅参加行宪纪念日大会。"幕僚劝阻他，由于民进党鼓动群众抗争，情势紧张。他说：'你们怕他们打我是吧？没关系，他们要打就让他们打好了！一切照常来做'。 当他坐车前往会场时，3000名示威群众围住会场呼喊抗争口号，镇暴警察以铁丝网阻挡住他们。会场里，11个民进党籍国大代表掀出'老贼下台'的抗议布条。"</p>
+
+<p>"蒋经国示意副官推著轮椅上台，欢迎掌声稍止，民进党代表继续高声喊叫。蒋经国似乎不以为意，继续向代表们简短地问好。然后他坐在轮椅上，让国民大会秘书长代为宣读大约5分鐘长的讲词。这件事过后不久，宋楚瑜拿一份杂志给经国先生看，杂志的封面故事赫然是，蒋经国有意给自己兴建一座豪华的纪念堂。蒋经国笑了：'我连给自己盖栋房子都没有，干嘛要盖个大坟墓呀？'"</p>
+
+</blockquote>
+
+<p>1988年1月1日，在蒋经国的指示下，当局正式结束对报纸的限证（维持在29家）、限张（维持在三大张）的禁令，数天之内，就有200家左右新出版物向当局办理登记，街头立刻出现许多新兴画报。同时也有60多个政治团体申请註册成立政党。后来，包括民主进步党在内，共有20个政治组织获得通过，正式成立政党。</p>
+
+<blockquote>
+
+<p>"1月13日上午，蒋经国抱怨身体不舒服，虽然医生一时找不到原由，还是替他注射静脉点滴。蒋经国要见见他的长子孝文。孝文见过父亲后，向母亲表示，父亲病容满面。下午1时50分左右，蒋经国在午睡中，突然发生胃肠道严重大出血。血液阻碍呼吸，使他陷入休克状态。由于他身上装置的心律调整器把心跳维持在每分鐘70，他的心臟无法快速供应氧气到全身各部位，医生还来不及把他送到医院施救，就已经撒手人寰。医师记得，当天下午天气晴朗，阳光和煦。"</p>
+
+</blockquote>
+
+<blockquote>
+
+<p>"行政院新闻局在4个小时后公佈了蒋经国辞世的消息。当天夜里9点鐘，李登辉宣誓就职。中华民国有史以来第一次没有了强人，可是倒也似乎没起任何涟漪。翌晨，行政院例行院会，花了两个小时讨论河川污染防治问题。13年前，蒋介石逝世时，新闻界及高级官员使用过去帝王宫廷的生花妙语来追述撒手人寰的领袖之伟大事功。但是经国之死，不见传统的溢美讚颂和半宗教性质的諛辞。新闻媒体的评论和个人的悼词，都集中在蒋经国平凡的一面。"</p>
+
+</blockquote>
+
+<p><strong>八、总结</strong></p>
+
+<p>蒋经国是一个独裁者，但是他看到了民主制度的大势所趋，允许成立反对党和实现新闻自由，领导他的政党逐步让渡权力，最终使得台湾在社会基本稳定、经济没有衰退的情况下，从专制制度成功过渡到了民主制度。这就是蒋经国的历史地位，他总体上是一个正面的历史人物。</p>
+
+<p>虽然台湾的民主化有其特殊的历史背景（国民党在中共和美国的双重压力之下，作为一个台湾的外来政权，必须改革求生），不具有普遍意义。但是，它终究是世界历史上少有的成功案例，尤其是在等级森严的数千年儒家文化的影响之下。蒋经国的实践表明，在坚定的勇气和决心之下，至上而下的集权社会渐进式民主转变是可以实现的。</p>
+
+<blockquote>
+
+<p>"蒋经国在1978年可能认为自己还有十年以上的时间，可以完成台湾的民主转型。美国和台湾断交，不仅是一股强大的刺激力量，也是迈进改革的大好时机。事实上，蒋经国竟能把台湾在国际上的受挫转化为优势，一方面消除台湾本省籍人士心目中的独立意识，一方面又可用以说服外省人交出权力。80年代中期，中国、苏联和其他地方发生的种种事件，使蒋经国相信，几乎不敢想像的事也有可能实现。这些因素，加上他本身健康日益走下坡，使得他决心放手推动民主进程。当他逝世时，民主转型的工作仍有许多地方有待进一步推动。大体而言，到了1988年元月，民主政治虽然未臻完善，也相当粗糙，却已在台湾软着陆。"</p>
+
+</blockquote>
+
+<p>（完）</p>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">Creative Commons BY-NC-ND 3.0</a></li>
+<li>原文网址：<a href="http://www.ruanyifeng.com/blog/2012/07/chiang_ching-kuo.html">http://www.ruanyifeng.com/blog/2012/07/chiang_ching-kuo.html</a></li>
+<li>最后修改时间：2012年8月30日 13:27</li>
+<li>付费支持：<a href="https://me.alipay.com/ruanyf" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/rmb_32.png" title="人民币" alt="人民币 - 支付宝" style="border:none;vertical-align:middle;" /></a> | <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=yifeng.ruan@gmail.com&currency_code=USD&amount=0.99&return=http://www.ruanyifeng.com/thank.html&item_name=Ruan%20YiFeng's%20Blog&undefined_quantity=1&no_note=0" target="_blank"><img src="http://www.ruanyifeng.com/blog/images/dollar_32.png"  alt="美元 - paypal" title="美元" style="border:none;vertical-align:middle;" /></a> </li>
+</ul></div>]]>
+        <![CDATA[<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>]]>
+    </content>
+</entry>
+
+</feed>

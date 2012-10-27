@@ -21,8 +21,8 @@ def _train(lines):
     * lines: ((density, text_len, code_len, density_pre_line, text_len_pre_line, code_len_pre_line, density_next_line, text_len_next_line, code_len_next_line, decision), (...), ...)
     """
     filter_too_large = lambda x: x if x <= 1000 else 1000
-    input_data = (map(filter_too_large, line[:9]) for line in lines)
-    target_data = ([line[10]] for line in lines) 
+    input_data = [map(filter_too_large, line[:9]) for line in lines]
+    target_data = [[line[9]] for line in lines]
 
     net = nl.net.newff([[0.0, 1.0], [0.0, 1000.0], [0.0, 1000.0], [0.0, 1.0], [0.0, 1000.0], [0.0, 1000.0], [0.0, 1.0], [0.0, 1000.0], [0.0, 1000.0]], [10, 1])
     err = net.train(input_data, target_data, show=15)

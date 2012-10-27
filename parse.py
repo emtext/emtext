@@ -67,16 +67,17 @@ class Parser(object):
                         text += t
                 text = text.lstrip('\n')
                 if text and htmllen:
-                    self.result.append([text, float(len(text)) / htmllen, len(text), htmllen, each.tag, ''])
+                    self.result.append([text, float(len(text)) / htmllen, len(text), htmllen, each.tag, '', -1])
 
 
 if __name__ == '__main__':
-    html = open('1.html', 'r')
+    html = open('2.html', 'r')
     p = Parser()
     f = codecs.open("text.txt", "w", "utf-8")
-    pickle.dump(p.parser(html), f)
+    p.parser(html)
+#    pickle.dump(p.parser(html), f)
     f.close()
-    print ''.join([each[0] for each in p.result])
-    print ''.join([each[0] for each in p.result if each[1]>0.5])
+#    print ''.join([each[0] for each in p.result])
+    print '\n'.join([each[0] for each in p.result if each[1]>0.5])
 
 

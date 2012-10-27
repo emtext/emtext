@@ -1,0 +1,348 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- saved from url=(0041)http://www.elias.cn/MyProject/ExtMainText -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>MyProject / ExtMainText —— 提取html文档正文  | Elias的个人主页</title>
+	<link rel="stylesheet" href="./1_files/style.css" type="text/css">
+	<link rel="stylesheet" href="./1_files/color.css" type="text/css">
+	<!--HTMLHeader--><style type="text/css"><!--
+span.anchor {
+	float: left;
+	font-size: 10px;
+	margin-left: -10px;
+	width: 10px;
+    position:relative; top:-0.1em;
+	text-align: center;
+}
+span.anchor a { text-decoration: none; }
+span.anchor a:hover { text-decoration: underline; }
+ol.toc { text-indent:-20px; list-style: none; }
+ol.toc ol.toc { text-indent:-40px; }
+div.tocfloat { font-size: smaller; margin-bottom: 10px;
+    border-top: 1px dotted #555555; border-bottom: 1px dotted #555555;
+    padding-top: 5px; padding-bottom: 5px; 
+    width: 38%; float: right; margin-left: 10px; clear: right;
+    margin-right:-13px; padding-right: 13px; padding-left: 13px;
+    background-color: #eeeeee; }
+div.toc { font-size: smaller; 
+    padding: 4px; border: 1px dotted #cccccc;
+    background: #f7f7f7;
+    margin-bottom: 10px; }
+div.footnote { 
+  width: 160px; 
+  border-bottom: 1px solid blue;
+  margin-bottom: 0.5em;
+}
+p.footnote {
+  text-indent: -1em;
+  margin-right: 3em;
+  margin-left: 3em;
+  margin-top: 0px;
+  margin-bottom: 0.5em;
+  font-size: smaller;
+}
+a.footnote {
+  font-size: smaller;
+}
+.todo-form { border: none; }
+.todo-form tr td { border: none; font-weight: plain; text-align: left; padding: 4px; }
+.todo-form tr td.heading { text-align: right; width: 140px; padding-right: 6px; }
+table.todo-list { border: 2px solid #ccc; }
+table.todo-list tr.row1 { background-color: #eee; color: #555; }
+table.todo-list tr.row1 td { border-bottom: 2px solid #ccc; }
+table.todo-list tr:last-child.row1 td { border-bottom: none; }
+table.todo-list th { background-color: #ddd; padding: 3px; font-weight: normal; border: 1px solid #ccc; color: #444; }
+table.todo-list tr td { color: #666; }
+table.todo-simple-list { margin-left: 0px; }
+table.todo-simple-list tr td { border: none; padding: 4px; }
+.todo-category-text { color: #666; border-bottom: 1px solid #ccc; }
+.todo-description-text { color: #444; }
+.todo-overdue-text { color: #f66; border-bottom: 1px solid #ccc; }
+.todo-completed-text { color: #446600; border-bottom: 1px solid #ccc; }
+.todo-legend { text-align: center; color: #555; font-size: smaller; }
+  td.auth-none { background: #ffffff; text-align: center; }
+  td.auth-site { background: #d0ffd0; text-align: center; }
+  td.auth-group { background: #80e880; text-align: center; }
+  td.auth-page { background: #00c000; text-align: center; }
+
+div.sectionedit { float:right;font-size:smaller;}
+.editconflict { color:green; 
+  font-style:italic; margin-top:1.33em; margin-bottom:1.33em; }
+
+  table.markup { border:2px dotted #ccf; width:90%; }
+  td.markup1, td.markup2 { padding-left:10px; padding-right:10px; }
+  table.vert td.markup1 { border-bottom:1px solid #ccf; }
+  table.horiz td.markup1 { width:23em; border-right:1px solid #ccf; }
+  table.markup caption { text-align:left; }
+  div.faq p, div.faq pre { margin-left:2em; }
+  div.faq p.question { margin:1em 0 0.75em 0; font-weight:bold; }
+   
+    .frame 
+      { border:1px solid #cccccc; padding:4px; background-color:#f9f9f9; }
+    .lfloat { float:left; margin-right:0.5em; }
+    .rfloat { float:right; margin-left:0.5em; }
+a.varlink { text-decoration:none; }
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.bash  {font-family:monospace;}
+.bash .imp {font-weight: bold; color: red;}
+.bash .kw1 {color: #000000; font-weight: bold;}
+.bash .kw2 {color: #c20cb9; font-weight: bold;}
+.bash .kw3 {color: #7a0874; font-weight: bold;}
+.bash .co0 {color: #666666; font-style: italic;}
+.bash .co1 {color: #800000;}
+.bash .co2 {color: #cc0000; font-style: italic;}
+.bash .co3 {color: #000000; font-weight: bold;}
+.bash .es1 {color: #000099; font-weight: bold;}
+.bash .es2 {color: #007800;}
+.bash .es3 {color: #007800;}
+.bash .es4 {color: #007800;}
+.bash .es5 {color: #780078;}
+.bash .es_h {color: #000099; font-weight: bold;}
+.bash .br0 {color: #7a0874; font-weight: bold;}
+.bash .sy0 {color: #000000; font-weight: bold;}
+.bash .st0 {color: #ff0000;}
+.bash .st_h {color: #ff0000;}
+.bash .nu0 {color: #000000;}
+.bash .re0 {color: #007800;}
+.bash .re1 {color: #007800;}
+.bash .re2 {color: #007800;}
+.bash .re4 {color: #007800;}
+.bash .re5 {color: #660033;}
+.bash span.xtra { display:block; }
+
+.sourceblocklink {
+  text-align: right;
+  font-size: smaller;
+}
+.sourceblocktext {
+  padding: 0.5em;
+  border: 1px solid #808080;
+  color: #000000;
+  background-color: #f1f0ed;
+}
+.sourceblocktext div {
+  font-family: monospace;
+  font-size: small;
+  line-height: 1;
+  height: 1%;
+}
+.sourceblocktext div.head,
+.sourceblocktext div.foot {
+  font: italic medium serif;
+  padding: 0.5em;
+}
+
+--></style><link rel="alternate" type="application/rss+xml" title="Elias的个人主页" href="http://www.elias.cn/?n=Site.AllRecentChanges&action=rss">
+<link rel="alternate" type="application/atom+xml" title="Elias的个人主页" href="http://www.elias.cn/?n=Site.AllRecentChanges&action=atom"><link rel="shortcut icon" href="http://www.elias.cn/pub/favicon.ico" type="image/x-icon">  <meta name="robots" content="index,follow">
+<meta name="keywords" content="正文提取, 网页正文提取, Python, 标签密度, extract text from html, html tag density">
+<script type="text/javascript">
+function toggle(obj) {
+    var elstyle = document.getElementById(obj).style;
+    var text    = document.getElementById(obj + "tog");
+    if (elstyle.display == 'none') {
+        elstyle.display = 'block';
+        text.innerHTML = "hide";
+    } else {
+        elstyle.display = 'none';
+        text.innerHTML = "show";
+    }
+}
+</script>
+</head>
+
+<body>
+	<div id="page">
+		<div id="header">
+			<!--PageHeaderFmt-->
+			<div id="siteheader">
+				<h1 class="sitetitle"><a class="urllink" href="http://www.elias.cn/" rel="nofollow">Elias的个人主页</a></h1>
+<div class="sitetag">
+</div>
+
+			</div>
+			<!--/PageHeaderFmt-->
+
+			<!--PageTabsFmt-->
+			<div id="nav">
+				<ul><li><a class="wikilink" href="http://www.elias.cn/Profiles/Elias">关于我</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/Main/MyIdea">我的观点</a>
+</li><li><strong> <a target="_blank" class="urllink" href="http://blog.elias.cn/" rel="nofollow">我的Blog</a> </strong> <span style="display: none;"><a class="urllink" href="http://www.elias.cn/kolias/" rel="nofollow">'</a></span>
+</li><li><strong> <a target="_blank" class="urllink" href="https://twitter.com/EliasCn" rel="nofollow">我的Twitter</a> </strong>
+</li><li><a class="wikilink" href="http://www.elias.cn/PmWiki/PmWiki">PmWiki</a>
+</li></ul>
+
+			</div>
+			<!--/PageTabsFmt-->
+		</div>
+
+		<div id="sidebar">
+			<!--PageSearchFmt-->
+			<form id="searchform" action="http://www.elias.cn/" method="get">
+			<fieldset>
+				<input class="hidden" type="hidden" name="n" value="MyProject.ExtMainText">
+				<input class="hidden" type="hidden" name="action" value="search">
+				<input id="searchfield" type="text" name="q" value="">
+				<input id="searchbutton" type="submit" name="searchbutton" value="搜索">
+			</fieldset>
+			</form>
+			<!--/PageSearchFmt-->
+
+			<!--PageRightFmt-->
+			<ul><li><a class="wikilink" href="http://www.elias.cn/Main/HomePage">首页</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/Main/WikiSandbox">Wiki 练习沙盘</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/Site/AllRecentChanges">最近所有更新</a> (<a class="wikilink" href="http://www.elias.cn/Site/AllRecentChanges?action=rss">RSS</a>)
+<ul><li><a class="wikilink" href="http://www.elias.cn/Site/AllRecentChangesShort">最近所有更新（简洁）</a>
+</li></ul></li><li><strong> <a class="wikilink" href="http://www.elias.cn/En/HomePage">English Version</a> </strong>
+</li></ul><p class="vspace sidehead"> <a class="wikilink" href="http://www.elias.cn/Main/QuickList">快速链接</a>
+</p><ul><li><a class="wikilink" href="http://www.elias.cn/Elias/ToDo">我的待办事项（加密）</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/Python/HomePage">Python编程资料</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/Python/TurboGears2">TurboGears2 要点笔记</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/Linux/DebianLinux">Debian Gnu/Linux</a>
+</li></ul><p class="vspace sidehead"> 内容分类
+</p><ul><li><a class="wikilink" href="http://www.elias.cn/MyProject/HomePage">我的项目玩具</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/ComUse/HomePage">计算机使用</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/Linux/HomePage">Linux经验</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/Mac/HomePage">使用Mac系统</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/Android/HomePage">Android手机</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/Develop/HomePage">编程玩吧</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/Research/HomePage">也搞点科研</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/Other/HomePage">生活和娱乐</a>
+</li></ul><p class="vspace sidehead"> <a target="_blank" class="urllink" href="http://www.pmwiki.org/" rel="nofollow">PmWiki系统</a>
+</p><ul><li><a class="wikilink" href="http://www.elias.cn/Main/PmWiki">我的PmWiki经验</a>
+</li><li><a class="wikilink" href="http://www.elias.cn/Main/Log">本站维护记录</a>
+</li></ul><p class="vspace sidehead"> 友情链接
+</p><ul><li><a target="_blank" class="urllink" href="http://alsofly.org/" rel="nofollow">飞的主页</a>
+</li><li><a target="_blank" class="urllink" href="http://www.pmichaud.com/" rel="nofollow">pm教授</a>
+</li><li><a target="_blank" class="urllink" href="http://arithboy.org/wiki/" rel="nofollow">王昭个人主页</a>
+</li><li><a target="_blank" class="urllink" href="http://www.zoomquiet.org/" rel="nofollow">ZoomQuiet.org</a>
+</li><li><a target="_blank" class="urllink" href="http://www.cbsr.ia.ac.cn/users/zzx/Chinese.html" rel="nofollow">张兆翔个人主页</a>
+</li></ul><p class="vspace" style="text-align: right;"> <span style="font-size:83%"><a class="wikilink" href="http://www.elias.cn/Site/SideBar?action=edit">edit SideBar</a></span>
+</p>
+
+			<!--/PageRightFmt-->
+		</div>
+
+		<div id="content">
+			<div id="pagelead">
+				<div class="pageactions">
+					<!--PageActionFmt-->
+					<ul><li class="login"><a accesskey="l" rel="nofollow" class="wikilink" href="http://www.elias.cn/MyProject/ExtMainText?action=login">Login</a>
+</li><li class="browse"><a accesskey="" class="selflink" href="./1_files/1.html">查看</a>
+</li><li class="edit"><a accesskey="e" rel="nofollow" class="wikilink" href="http://www.elias.cn/MyProject/ExtMainText?action=edit">编辑</a>
+</li><li class="diff"><a accesskey="h" rel="nofollow" class="wikilink" href="http://www.elias.cn/MyProject/ExtMainText?action=diff">记录</a>
+</li><li class="print"><a accesskey="" rel="nofollow" class="wikilink" href="http://www.elias.cn/MyProject/ExtMainText?action=print">打印</a>
+</li><li class="backlinks"> <a accesskey="b" rel="nofollow" class="wikilink" href="http://www.elias.cn/MyProject/ExtMainText?action=search&q=link=MyProject.ExtMainText">Backlinks</a>
+</li></ul>
+
+					<!--/PageActionFmt-->
+				</div>
+
+				<div class="pageheader">
+					<!--PageTitleGroupFmt-->
+					<a href="http://www.elias.cn/MyProject" class="pagegroup">MyProject</a>
+					<!--/PageTitleGroupFmt-->
+					<!--PageTitleFmt-->
+					<h1><a href="./1_files/1.html">ExtMainText —— 提取html文档正文</a></h1>
+					<!--/PageTitleFmt-->
+				</div>
+
+			</div>
+
+			<!--PageText-->
+<div id="wikitext">
+<div style="margin-top: 0px;" class="tocfloat"><p style="margin-top: 0px;"><a name="toc" id="toc"></a><b>On this page...</b> (<a id="tocidtog" href="javascript:toggle('tocid');">hide</a>)</p><ol style="margin-top: 0px;" class="toc" id="tocid"><li style="margin-top: 0px;">1. <a href="http://www.elias.cn/MyProject/ExtMainText#toc1"> 简介</a></li><li style="margin-top: 0px;">2. <a href="http://www.elias.cn/MyProject/ExtMainText#toc2"> 脚本下载</a><ol style="margin-top: 0px;" class="toc"><li style="margin-top: 0px;">2.1 <a href="http://www.elias.cn/MyProject/ExtMainText#toc3"> 更新记录</a></li></ol></li><li style="margin-top: 0px;">3. <a href="http://www.elias.cn/MyProject/ExtMainText#toc4"> 使用说明</a></li><li style="margin-top: 0px;">4. <a href="http://www.elias.cn/MyProject/ExtMainText#toc5"> 后续改进方向</a></li><li style="margin-top: 0px;">5. <a href="http://www.elias.cn/MyProject/ExtMainText#toc6"> 与其他实现的比较</a></li><li style="margin-top: 0px;">6. <a href="http://www.elias.cn/MyProject/ExtMainText#toc7"> 讨论</a></li></ol></div>
+<div class="vspace"></div><div class="sectionedit"><a name="sMyProject.ExtMainText_1"></a><a href="http://www.elias.cn/MyProject/ExtMainText?action=edit&s=1&auto=y&from=MyProject.ExtMainText">(Edit Section ↓)</a></div>
+<h2 style="margin-top: 0px;"><a name="toc1" id="toc1"></a>1.  简介</h2>
+<p>这是一个使用Python语言实现的函数库，能够帮助从html文档中提取文档正文，换句话说也就是能够过滤页面上的广告、栏目导航等非正文内容。此函数库可以用在从其他网站抓取文章内容的过程中，以及帮助搜索引擎抓取器忽略无关内容，将页面分析集中到网页更有价值的部分。
+</p>
+<p class="vspace">函数实现的基本原理是“正文标签密度法”，0.2版本计算网页每个html标签下的“正文长度/标签下所有字符总长”，取文档中密度高于制定阈值的最长部分作为文档正文输出。原理见：<a class="urllink" href="http://ai-depot.com/articles/the-easy-way-to-extract-useful-text-from-arbitrary-html/" rel="nofollow">The Easy Way to Extract Useful Text from Arbitrary HTML</a>。
+</p>
+<p class="vspace">对不同网站，因其语言特征及模板外观设计不同，而应当分别指定不同的密度阈值，具体应该根据所有标签的密度分布状况实验确定。一般英文网站可以取阈值0.5，中文网站使用0.5作为阈值同样能得到不错的输出结果。
+</p><ul><li>当<span style="color: blue;">filterMode</span>为 False 时，代码仅返回最长的一段正文，有可能会将博客的评论信息等过滤掉（当评论文字都比较短的时候）；
+</li><li>当<span style="color: blue;">filterMode</span>为 True 时，代码会过滤掉密度低于阈值的html片段，也即能够保留多段正文文字，从而通常可以保留博客的评论信息。
+</li></ul><p class="vspace">函数最终输出的是包含文档正文的html片段，如果需要将提取的正文内容进一步转换为text纯文本内容，则可以调用<a class="urllink" href="http://www.aaronsw.com/2002/html2text/" rel="nofollow">html2text</a>。
+</p>
+<p class="vspace">English Doc, See: <a class="wikilink" href="http://www.elias.cn/En/ExtMainText">En.ExtMainText</a>
+</p>
+<div class="vspace"></div><div class="sectionedit"><a name="sMyProject.ExtMainText_2"></a><a href="http://www.elias.cn/MyProject/ExtMainText?action=edit&s=2&auto=y&from=MyProject.ExtMainText">(Edit Section ↓)</a></div>
+<h2 style="margin-top: 0px;"><a name="toc2" id="toc2"></a>2.  脚本下载</h2>
+<ul><li><ins>0.2a版本</ins>：<a class="urllink" href="http://www.elias.cn/uploads/MyProject/ExtMainText_0.2a.zip" rel="nofollow">Attach:ExtMainText_0.2a.zip</a>
+</li><li><ins>0.2版本</ins>：<a class="urllink" href="http://www.elias.cn/uploads/MyProject/ExtMainText_0.2.zip" rel="nofollow">Attach:ExtMainText_0.2.zip</a>
+</li><li><ins>0.1a版本</ins>：<a class="urllink" href="http://www.elias.cn/uploads/MyProject/ExtMainText_0.1a.zip" rel="nofollow">Attach:ExtMainText_0.1a.zip</a>
+</li><li><ins>0.1版本</ins>：<a class="urllink" href="http://www.elias.cn/uploads/MyProject/ExtMainText_0.1.zip" rel="nofollow">Attach:ExtMainText_0.1.zip</a>
+</li></ul><div class="vspace"></div><div class="sectionedit"><a name="sMyProject.ExtMainText_3"></a><a href="http://www.elias.cn/MyProject/ExtMainText?action=edit&s=3&auto=y&from=MyProject.ExtMainText">(Edit Section ↓)</a></div>
+<h3 style="margin-top: 0px;"><a name="toc3" id="toc3"></a>2.1  更新记录</h3>
+<ul><li><ins>2010-01-26</ins>：解决有时html文本中的特殊字符造成编码错误的问题。
+</li><li><ins>2009-12-05</ins>：改为使用lxml api实现，使用新的密度计算公式，并增加“使用过滤模式”的选项。
+</li><li><ins>2008-10-21</ins>：在__main__部分添加html向text转换的代码，直接执行<span class="wikiword">ExtMainText</span>将给出更直观的输出；作为0.1a版本发布。
+</li><li><ins>2008-10-19</ins>：完成基本功能，作为0.1版本发布。
+</li></ul><div class="vspace"></div><div class="sectionedit"><a name="sMyProject.ExtMainText_4"></a><a href="http://www.elias.cn/MyProject/ExtMainText?action=edit&s=4&auto=y&from=MyProject.ExtMainText">(Edit Section ↓)</a></div>
+<h2 style="margin-top: 0px;"><a name="toc4" id="toc4"></a>3.  使用说明</h2>
+<p>作为库函数使用时可参照源代码的<span class="wikiword">DocString</span>以及“ if __name__ == '__main__' ”部分。也可以直接运行此脚本文件：
+</p><div class="sourceblock " id="sourceblock1">
+  <div class="sourceblocktext"><div class="bash">python ExtMainText.py 输入的html文件名</div></div>
+  <div class="sourceblocklink"><a href="http://www.elias.cn/MyProject/ExtMainText?action=sourceblock&num=1" type="text/plain">[Get Code]</a></div>
+</div>
+这样脚本将以默认参数（0.5）提取该html文件的正文内容，并转换为纯文本输出。
+<p></p>
+<p class="vspace">另外请注意输入的html文本的编码，在0.2a之后的版本只接受unicode文本作为输入，因此需要提前完成对输入文档的解码。
+</p>
+<div class="vspace"></div><div class="sectionedit"><a name="sMyProject.ExtMainText_5"></a><a href="http://www.elias.cn/MyProject/ExtMainText?action=edit&s=5&auto=y&from=MyProject.ExtMainText">(Edit Section ↓)</a></div>
+<h2 style="margin-top: 0px;"><a name="toc5" id="toc5"></a>4.  后续改进方向</h2>
+<p>相对于固定阈值，使用神经网络等智能方法能够获得更为准确的输出，建议参考<a class="urllink" href="http://gfnpad.blogspot.com/2009/11/blog-post_28.html" rel="nofollow">也谈网页正文提取[下]</a>以及赖勇浩先生翻译的<a class="urllink" href="http://blog.csdn.net/lanphaday/archive/2007/08/13/1741185.aspx" rel="nofollow">从HTML文件中抽取正文的简单方案</a>。
+</p>
+<div class="vspace"></div><div class="sectionedit"><a name="sMyProject.ExtMainText_6"></a><a href="http://www.elias.cn/MyProject/ExtMainText?action=edit&s=6&auto=y&from=MyProject.ExtMainText">(Edit Section ↓)</a></div>
+<h2 style="margin-top: 0px;"><a name="toc6" id="toc6"></a>5.  与其他实现的比较</h2>
+<p><a class="urllink" href="http://gfnpad.blogspot.com/2009/11/blog-post_28.html" rel="nofollow">也谈网页正文提取[下]</a>和<a class="urllink" href="http://ai-depot.com/articles/the-easy-way-to-extract-useful-text-from-arbitrary-html/" rel="nofollow">The Easy Way to Extract Useful Text from Arbitrary HTML</a>两篇文章的非人工智能算法的部分（也就是使用静态阈值方法来提取文章正文）在算法和代码实现上都是完全一样的。虽然都是使用文本密度来识别文章正文部分，但他们对文本密度的计算方法和我的还是存在一定区别，这里以我个人的理解进行简单的比较分析。
+</p>
+<p class="vspace">他们在计算文本密度时，从头至尾逐步解析html，当遇到一行纯文本内容时，以这一行纯文本的长度作为“文本长度”，以这一行纯文本结束位置到上一行纯文本结束位置在原始html中所跨越的字符总数作为“字符长度”，并用两者的比值作为文本密度的值。这种计算方法存在一定的不合理性。<span style="color: blue;">从物理意义上来讲，“字符长度”应该是与修饰一段纯文本相关的html代码总长。</span>但他们的计算方法是将纯文本之前的html标签作为其修饰成分，对于前后匹配的html标签来说，特别是纯文本被括在多层表格及&lt;div&gt;标签之内的情况，不能保证将各层标签的结束标签算作此段纯文本的修饰内容，相反却很可能将之计算为下一行纯文本所对应的字节长度组成部分。在极端条件下，也即分析第一行纯文本时，算法会将之前的所有html标签算作字节组成部分，也即包含了&lt;head&gt;部分，这不合理地极大地降低了密度的取值。虽然扫描一般html页面遇到的第一行纯文本通常是菜单或者导航部分，需要作为正文提取的可能性不大，但这种算法实现方法与其预期体现的物理意义不能很好地吻合。
+</p>
+<p class="vspace">我的实现则将每个html标签下涵盖的所有内容作为整体来分析，比如对一个&lt;div&gt;标签，算法将此起始标签与其对应结束标签之间包括的所有纯文本内容作为“文本长度”，包括的所有字节内容作为“字节长度”，如此计算文本密度，可以保证所涉及的字节一定是与对应的纯文本密切相关的。因此对于静态阈值方法来说，估计能够获得稍好的正文提取准确度。
+</p>
+<p class="vspace">当然，那两篇文章的方法也有一定好处，就是对纯文本内容按照行来区分，对后续人工智能的训练和处理过程来说更便于人的操作和理解。但文中提及的神经网络方法并不是唯一的选择，或许可以不考虑文本行，而是从 html 标签的出现顺序上寻找规律。
+</p>
+<div class="vspace"></div><div class="sectionedit"><a name="sMyProject.ExtMainText_7"></a><a href="http://www.elias.cn/MyProject/ExtMainText?action=edit&s=7&auto=y&from=MyProject.ExtMainText">(Edit Section ↓)</a></div>
+<h2 style="margin-top: 0px;"><a name="toc7" id="toc7"></a>6.  讨论</h2>
+<p> ======================= 回帖======================== 
+</p>
+<p class="vspace">用如下这段html作了测试，发现s也被提了出来，建议楼主直接过滤掉head
+</p>
+<p class="vspace">&lt;html&gt;&lt;head&gt;&lt;title&gt;s&lt;/title&gt;&lt;/head&gt;&lt;body&gt;The Easy Way to Extract Useful Text from Arbitrary HTML&lt;div&gt;abcde123451234512345&lt;/div&gt;&lt;div&gt;12345abcde1&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;
+</p>
+</div>
+
+		</div>
+
+		<div id="footer">
+			<!--PageFooterFmt-->
+				<div class="footer-section">
+					<p>Page last modified on 2010 年 11 月 25 日, 08:14 下午 　　　 （京ICP备10013669号，<a class="urllink" href="http://rashost.com/" rel="nofollow">瑞豪开源提供VPS</a>）
+</p>
+
+				</div>
+				<div class="footer-section">
+					
+				</div>
+				<div class="footer-about">
+					
+				</div>
+			<!--/PageFooterFmt-->
+			<hr class="clear">
+		</div>
+
+	</div>
+
+	<div id="credits">
+		<div class="alignleft">
+			<a style="color:#7A9299;" href="http://www.ndesign-studio.com/resources/wp-themes/glossyblue/">GlossyBlue</a> theme adapted by <a href="http://solidgone.org/Skins/">David Gilbert</a>
+		</div>
+		<div class="alignright">
+			Powered by <a href="http://pmwiki.com/">PmWiki</a>
+		</div>
+	</div>
+<!--HTMLFooter-->
+
+
+</body></html>

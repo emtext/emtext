@@ -16,15 +16,18 @@ class Parser(object):
     result = []
 
     def parser(self, html):
-        self._checkUnicode(html)
+#        self._checkUnicode(html)
         tree = soupparser.fromstring(html)
         self.result = []
-        self._clear_ignore(root)
+        self._clear_ignore(tree)
         self._parser(tree)
         return self.result
 
 
     def _clear_ignore(self, tree):
+        """
+        remove nouse item in html
+        """
         for each in tree:
             if each.tag in self.tags_to_ignore or each.tag is etree.Comment:
                 tree.remove(each)
@@ -32,40 +35,11 @@ class Parser(object):
                 self._clear_ignore(each)
 
     def _checkUnicode(self, html):
+        """
+        check html unicode
+        """
         assert type(html) == unicode, 'Input html text must be unicode!'
         return self.control_char_re.sub(' ', html)
-
-    def _get_content(self, tree):
-        text = ''
-        if (str(tree.tag).lower() in self.tags_to_ignore):
-            return ''
-        if tree.text != None:
-            text += tree.text
-        for child in tree:
-            text += self._get_content(child)
-        if str(tree.tag).lower() in self.tags_in_newline:
-            text += '\n'
-        if tree.tail != None:
-            text += tree.tail
-        return text
-
-    def _parser2(self, tree):
-#        content = self._get_content(tree)
-        text = tree.text if tree.text != None else ''
-        tail = tree.tail if tree.tail != None else ''
-        content = text + tail
-        html = etree.tostring(tree, encoding = unicode)
-        parentTag = tree.getparent().tag if tree.getparent() else ''
-        child = []
-        for each in tree:
-            child.append(self._parser2(each))
-        return {'self': ['', (1.0 * len(content)) / len(html), len(content), len(html), tree.tag, parentTag], 'child': child}
-
-    list = []
-    def _getDensity2(self, result):
-        self.list.append(result['self'][1])
-        for each in result['child']:
-            self._getDensity2(each)
 
     def _parser(self, tree):
         f_each = True
@@ -91,16 +65,10 @@ class Parser(object):
                     text = ''
                     for t in each.itertext():
                         text += t
-
-                if htmllen:
+                text = text.lstrip('\n')
+                if text and htmllen:
                     self.result.append([text, float(len(text)) / htmllen, len(text), htmllen, each.tag, ''])
 
-
-    def _getDensity(self):
-        self.list = [each[1] for each in self.result]
-
-    def _content(self, v=0.3):
-        return [each[0] for each in self.result if each[1]>v]
 
 if __name__ == '__main__':
     html = open('1.html', 'r')
@@ -108,5 +76,7 @@ if __name__ == '__main__':
     f = codecs.open("text.txt", "w", "utf-8")
     pickle.dump(p.parser(html), f)
     f.close()
+    print ''.join([each[0] for each in p.result])
+    print ''.join([each[0] for each in p.result if each[1]>0.5])
 
 

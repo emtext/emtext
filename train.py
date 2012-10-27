@@ -6,7 +6,7 @@ Main trainer for emtext.
 
 Will use RSS feeds as trainning data. (We guess RSS usually have no Ads and no menu things.)
 """
-
+import random
 import re
 import urllib2
 import chardet
@@ -38,15 +38,20 @@ def train_from_rss(feeds):
         lines = []
         # 大于2行才有意义
         # 获取最后一个是1的,这样所有判断的才是确定是正确的。
+        start = 0
         last = 0
         for index, val in enumerate(list):
             if val[5]:
                 last = index
+            if val[5] and not start:
+                start = index
         for index in range(last):
             print str(list[index][5]) + str(list[index][1])[:4] + list[index][0]
 
         if len(list) > 2:
             for index in range(len(list)):
+                if index < start:
+                    continue
                 if index > last:
                     break
                 if index == 0:
@@ -65,13 +70,31 @@ def train_from_rss(feeds):
     allLines += lines
     train(lines)
 
+def train_from_default():
+    train([[i * 1.0 / 1000, 0, 0, 0, 0, 0, 0, 0, 0, int(i>= 500)]for i in range(1000)])
+
+def train_from_random():
+    l = [[i * 1.0 / 1000, 0, 0, 0, 0, 0, 0, 0, 0, int(i>= 500)]for i in range(1000)]
+    random.shuffle(l)
+    train(l)
+
+def check_from_num():
+    l = [[i * 1.0 /100,] for i in range(100)]
+    for n,m in [(check(i),i[0]) for i in l]:
+        print str(n) + str(m)
+
+
 if __name__ == '__main__':
-    feed_url = 'http://www.ruanyifeng.com/blog/atom.xml'
-    feed = feedparser.parse(feed_url)
-    feeds = []
-    for item in feed['entries'][:5]:
-        feeds.append((item['link'], item['content'][0]['value']))
-    train_from_rss(feeds)
+#    feed_url = 'http://www.ruanyifeng.com/blog/atom.xml'
+#    feed = feedparser.parse(feed_url)
+#    feeds = []
+#    for item in feed['entries'][:5]:
+#        feeds.append((item['link'], item['content'][0]['value']))
+#    train_from_rss(feeds)
+    train_from_default()
+    check_from_num()
+    train_from_random()
+    check_from_num()
 
 #        for each in allLines:
 #            if check(each[:9]):

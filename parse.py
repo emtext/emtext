@@ -18,7 +18,10 @@ class Parser(object):
     tags_in_newline=["p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "br", "li"]
     result = []
 
-    def parser(self, html):
+    def parserBase(self, html):
+        return soupparser.fromstring(html)
+
+    def parserByDensity(self, html):
 #        self._checkUnicode(html)
         tree = soupparser.fromstring(html)
         self.result = []
@@ -27,9 +30,54 @@ class Parser(object):
         return self.result
 
     def parserWithMain(self, html):
+        """
+        抓取页面主要部分
+        """
         tree = soupparser.fromstring(html)
         self._clear_ignore(tree)
-        return etree.tostring(self._findMain(tree), encoding=unicode)
+        return self._findMain(tree)
+
+    def parserWithMainLvl(self, tree):
+        """
+        抓取页面的主要层次
+        """
+        lvl = 1
+        result = []
+        while(True):
+            cnt, subCnt = self._countByLvl(tree, lvl)
+            result.append((cnt, lvl))
+            lvl += 1
+            if subCnt == 0:
+                break
+        d = dict(result)
+        maxLvl = d[max(d.keys())]
+        root = etree.Element("div")
+        self._addToRoot(tree, root, maxLvl)
+        return root
+
+    def _addToRoot(self, tree, root, leftLvl=1):
+        if leftLvl == 1:
+            for each in tree:
+                root.append(each)
+        else:
+            for each in tree:
+                self._addToRoot(each, root, leftLvl-1)
+
+    def _countByLvl(self, tree, leftLvl=1):
+        if leftLvl == 1:
+            cnt = 0
+            subCnt = 0
+            for each in tree:
+                cnt += len(each.text if each.text else '')
+                subCnt += len(each)
+            return cnt,subCnt
+        else:
+            result = []
+            for each in tree:
+                result.append(self._countByLvl(each, leftLvl - 1))
+            return reduce(lambda x, y: (x[0]+y[0], x[1]+y[1]), result, (0, 0))
+
+
 
     def _findMain(self, tree, pct=0.5):
         cnt = self._count(tree)
@@ -53,6 +101,26 @@ class Parser(object):
         count = 0
         for each in tree.itertext():
             count += len(each.rstrip())
+        return count
+
+    def filterByReduceCount(self, tree):
+        """
+        根据reduce count过滤掉同级的元素，可用于过滤评论
+        """
+        l = [(self._countWithReduce(each), each) for each in tree]
+        sum = reduce(lambda x,y: x + y, [each[0] for each in l], 0)
+        for d in [each[1] for each in l if each[0] * len(l) < sum]:
+            tree.remove(d)
+        return tree
+
+    def _countWithReduce(self, tree, reduce=1):
+        """
+        有递减的count
+        """
+        count = 0
+        for each in tree:
+            count += len(each.text.rstrip() if each.text else '') * 1.0 * reduce
+            count += self._countWithReduce(each, reduce / 2)
         return count
 
     def _clear_ignore(self, tree):
@@ -106,19 +174,14 @@ class Parser(object):
 
 
 if __name__ == '__main__':
-    link = 'http://blog.trello.com/due-date-notifications-list-move-and-copy-org-logos-and-more/'
+    link = 'http://www.elias.cn/MyProject/ExtMainText'
 
     raw = urllib2.urlopen(link).read()
     encoding = chardet.detect(raw)['encoding']
     html = raw.decode(encoding)
-#    html = open('2.html', 'r')
+#    html = open('3.html', 'r')
     p = Parser()
-#    f = codecs.open("text.txt", "w", "utf-8")
-#    p.parser(html)
-    print '\n'.join([each for each in html2text(p.parserWithMain(html)).split('\n') if len(each.rstrip())])
-#    pickle.dump(p.parser(html), f)
-#    f.close()
-#    print ''.join([each[0] for each in p.result])
-#    print '\n'.join([each[0] for each in p.result if each[1]>0.5])
-
+#    print '\n'.join([each for each in html2text(etree.tostring(p.filterByReduceCount(p.parserWithMain(html)), encoding=unicode)).split('\n') if len(each.rstrip())])
+#    print '\n'.join([each for each in html2text(etree.tostring(p.parserWithMain(html), encoding=unicode)).split('\n') if len(each.rstrip())])
+    print '\n'.join([each for each in html2text(etree.tostring(p.parserWithMainLvl(p.parserBase(html)), encoding=unicode)).split('\n') if len(each.rstrip())])
 

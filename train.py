@@ -25,7 +25,7 @@ def train_from_rss(feeds):
         encoding = chardet.detect(raw)['encoding']
         raw_uni = raw.decode(encoding)
         # ToDo: 把 raw_uni 丢给密度计算器，算出每行文本的密度等属性。
-        list = p.parser(raw_uni)
+        list = p.parserByDensity(raw_uni)
         # ToDo: 看每行文本是否出现在 text_clean 中，如果出现在里面，那么标记为 1 （也即：认为是正文）。
         for each in list:
 #            each[5] = int(each[0] in text_clean)

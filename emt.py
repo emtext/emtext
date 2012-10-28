@@ -5,32 +5,30 @@
 Main interface for emtext.
 """
 
-from ann import train, check
-from parse import Parser
+import urllib2
+import chardet
 
-def extract(html):
-    p = Parser()
-    # ToDo: 把 raw_uni 丢给密度计算器，算出每行文本的密度等属性。
-    list = p.parserByDensity(html)
+from ann import  check
+import gfparse
 
-    lines = []
-    if len(list) > 2:
-        for index in range(len(list)):
-            if index == 0:
-                lines.append(
-                    [list[index][1], list[index][2], list[index][3], 0, 0, 0,
-                     list[index + 1][1], list[index + 1][2], list[index + 1][3], list[index][0]])
-            if index == len(list) - 1:
-                lines.append(
-                    [list[index][1], list[index][2], list[index][3], list[index - 1][1], list[index - 1][2], list[index - 1][3],
-                     0, 0, 0, list[index][0]])
-            else:
-                lines.append(
-                    [list[index][1], list[index][2], list[index][3], list[index - 1][1], list[index - 1][2], list[index - 1][3],
-                     list[index + 1][1], list[index + 1][2], list[index + 1][3], list[index][0]])
+def extract(raw_uni):
+    lines = gfparse.extract_text(raw_uni.encode('utf-8'))
+    lines = map(lambda x:[x.bytes, len(x.text), x.text], lines)
+    lines = [[line[2].strip().decode('utf-8', 'ignore'), float(line[1]) / line[0], line[1], line[0]] for line in lines]
+    fake_line = ['', 0, 0, 0]
+    lines = [fake_line] + lines + [fake_line]
+    lines = [[lines[i][1], lines[i - 1][1], lines[i + 1][1], lines[i][0]] for i in range(1, len(lines) - 1)]
 
     for line in lines:
-        decision = check(line[:9])
-        if decision:
-            print str(line[1])[:4] , line[0], line[9]
+        decision = check(line[:3])
+        if decision > 0.4:
+#            print line[0], line[-1]
+            yield line[-1]
+
+if __name__ == '__main__':
+    raw = urllib2.urlopen('http://www.ruanyifeng.com/blog/2012/02/44_weeks_of_words.html').read()
+    encoding = chardet.detect(raw)['encoding']
+    raw_uni = raw.decode(encoding)
+    for line in extract(raw_uni):
+        print line
 

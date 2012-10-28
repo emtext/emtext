@@ -9,10 +9,10 @@ import urllib2
 import chardet
 
 from ann import  check
-import gfparse
+import parse
 
 def extract(raw_uni):
-    lines = gfparse.extract_text(raw_uni.encode('utf-8'))
+    lines = parse.extract_text(raw_uni.encode('utf-8'))
     lines = map(lambda x:[x.bytes, len(x.text), x.text], lines)
     lines = [[line[2].strip().decode('utf-8', 'ignore'), float(line[1]) / line[0], line[1], line[0]] for line in lines]
     fake_line = ['', 0, 0, 0]

@@ -28,10 +28,10 @@ def _train(lines):
 #    err = net.train(input_data, target_data, show=15)
 
     filter_too_large = lambda x: x if x <= 1000 else 1000
-    input_data = [map(filter_too_large, line[:1]) for line in lines]
+    input_data = [map(filter_too_large, [line[0], line[3], line[6]]) for line in lines]
     target_data = [[line[9]] for line in lines]
 
-    net = nl.net.newff([[0.0, 1.0]], [5, 1])
+    net = nl.net.newff([[0.0, 1.0], [0.0, 1.0], [0.0, 1.0]], [5, 1])
     err = net.train(input_data, target_data, show=15)
 
     return net
@@ -71,7 +71,7 @@ def check(line):
     if ann_model == None:
         return None
 #    guess = ann_model.sim([line])
-    guess = ann_model.sim([[line[0]]])
+    guess = ann_model.sim([[line[0], line[3], line[6]]])
     print guess, line
     if guess >= 0.5:
         return True

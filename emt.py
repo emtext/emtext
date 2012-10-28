@@ -25,10 +25,14 @@ def extract(raw_uni):
 #            print line[0], line[-1]
             yield line[-1]
 
-if __name__ == '__main__':
-    raw = urllib2.urlopen('http://www.ruanyifeng.com/blog/2012/02/44_weeks_of_words.html').read()
+def extract_url(url):
+    raw = urllib2.urlopen(url).read()
     encoding = chardet.detect(raw)['encoding']
     raw_uni = raw.decode(encoding)
     for line in extract(raw_uni):
+        yield line
+
+if __name__ == '__main__':
+    for line in extract_url('http://www.ruanyifeng.com/blog/2012/02/44_weeks_of_words.html'):
         print line
 

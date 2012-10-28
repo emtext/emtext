@@ -52,8 +52,8 @@ def train_from_rss(feeds):
             for index in range(len(list)):
                 if index < start:
                     continue
-                if index > last:
-                    break
+#                if index > last:
+#                    break
                 if index == 0:
                     lines.append(
                         [list[index][1], list[index][2], list[index][3], 0, 0, 0,
@@ -70,6 +70,39 @@ def train_from_rss(feeds):
     allLines += lines
     train(lines)
 
+def check_from_rss(feeds):
+    p = Parser()
+    allLines = []
+    for link, content in feeds:
+        text_clean = re.sub('<[^<]+?>', '', content)
+        print text_clean
+        raw = urllib2.urlopen(link).read()
+        encoding = chardet.detect(raw)['encoding']
+        raw_uni = raw.decode(encoding)
+        # ToDo: 把 raw_uni 丢给密度计算器，算出每行文本的密度等属性。
+        list = p.parserByDensity(raw_uni)
+
+        lines = []
+        if len(list) > 2:
+            for index in range(len(list)):
+                if index == 0:
+                    lines.append(
+                        [list[index][1], list[index][2], list[index][3], 0, 0, 0,
+                         list[index + 1][1], list[index + 1][2], list[index + 1][3], list[index][0]])
+                if index == len(list) - 1:
+                    lines.append(
+                        [list[index][1], list[index][2], list[index][3], list[index - 1][1], list[index - 1][2], list[index - 1][3],
+                         0, 0, 0, list[index][0]])
+                else:
+                    lines.append(
+                        [list[index][1], list[index][2], list[index][3], list[index - 1][1], list[index - 1][2], list[index - 1][3],
+                         list[index + 1][1], list[index + 1][2], list[index + 1][3], list[index][0]])
+
+    allLines += lines
+    for line in allLines:
+        if check(line[:9]):
+            print str(line[1])[:4] + line[0]
+
 def train_from_default():
     train([[i * 1.0 / 1000, 0, 0, 0, 0, 0, 0, 0, 0, int(i>= 500)]for i in range(1000)])
 
@@ -79,25 +112,16 @@ def train_from_random():
     train(l)
 
 def check_from_num():
-    l = [[i * 1.0 /100,] for i in range(100)]
-    for n,m in [(check(i),i[0]) for i in l]:
-        print str(n) + str(m)
+#    l = [[i * 1.0 /100,] for i in range(100)]
+#    for n,m in [(check(i),i[0]) for i in l]:
+#        print str(n) + str(m)
+    pass
 
 
 if __name__ == '__main__':
-#    feed_url = 'http://www.ruanyifeng.com/blog/atom.xml'
-#    feed = feedparser.parse(feed_url)
-#    feeds = []
-#    for item in feed['entries'][:5]:
-#        feeds.append((item['link'], item['content'][0]['value']))
-#    train_from_rss(feeds)
+    # 测试训练器，给了2个序列，一个顺序的一个乱序的
     train_from_default()
     check_from_num()
     train_from_random()
     check_from_num()
-
-#        for each in allLines:
-#            if check(each[:9]):
-#                print each[9]
-
 

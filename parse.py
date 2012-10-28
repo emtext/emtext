@@ -22,6 +22,9 @@ class Parser(object):
         return soupparser.fromstring(html)
 
     def parserByDensity(self, html):
+        """
+        用比重来过滤文本
+        """
 #        self._checkUnicode(html)
         tree = soupparser.fromstring(html)
         self.result = []
@@ -175,7 +178,6 @@ class Parser(object):
 
 if __name__ == '__main__':
     link = 'http://www.elias.cn/MyProject/ExtMainText'
-
     raw = urllib2.urlopen(link).read()
     encoding = chardet.detect(raw)['encoding']
     html = raw.decode(encoding)
